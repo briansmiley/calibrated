@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
 import { formatValue, getUnitDisplay } from '@/lib/formatValue'
@@ -16,10 +17,15 @@ interface QuestionContentProps {
   userId: string | null
 }
 
-export function QuestionContent({ question, guesses, userEmail, userId }: QuestionContentProps) {
+export function QuestionContent({ question, guesses: initialGuesses, userEmail, userId }: QuestionContentProps) {
+  const [guesses, setGuesses] = useState<Guess[]>(initialGuesses)
   const { prefix, suffix } = getUnitDisplay(question.unit_type, question.custom_unit)
   const hasAnswer = question.true_answer !== null
   const guessesRevealed = question.guesses_revealed
+
+  const handleGuessSubmitted = (newGuess: { id: string; display_name: string | null; value: number; created_at: string; prior_visible_guesses: number | null }) => {
+    setGuesses(prev => [...prev, newGuess as Guess])
+  }
 
   const content = (
     <div className="mx-auto max-w-xl">
@@ -60,6 +66,7 @@ export function QuestionContent({ question, guesses, userEmail, userId }: Questi
             maxValue={question.max_value}
             unitPrefix={prefix}
             unitSuffix={suffix}
+            onGuessSubmitted={handleGuessSubmitted}
           />
         </CardContent>
       </Card>
