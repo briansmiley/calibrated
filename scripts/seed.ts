@@ -1,8 +1,20 @@
 import { createClient } from '@supabase/supabase-js'
+import { execSync } from 'child_process'
 
-// Local Supabase credentials
+// Get local Supabase credentials from `supabase status`
+function getLocalSupabaseKey(): string {
+  try {
+    const output = execSync('supabase status', { encoding: 'utf-8' })
+    const match = output.match(/Secret\s+│\s+(sb_secret_\S+)/)
+    if (match) return match[1]
+  } catch {
+    // supabase CLI not available or not running
+  }
+  throw new Error('Could not get Supabase secret key. Make sure `supabase start` is running.')
+}
+
 const SUPABASE_URL = process.env.SUPABASE_URL || 'http://127.0.0.1:54321'
-const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY || 'sb_secret_N7UND0UgjKTVK-Uodkm0Hg_xSvEMPvz'
+const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY || getLocalSupabaseKey()
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, {
   auth: { autoRefreshToken: false, persistSession: false }
