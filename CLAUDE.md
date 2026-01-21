@@ -1,5 +1,7 @@
 # Calibrated - Claude Context
 
+> **Maintenance**: Update this file when making significant changes (new features, schema changes, new patterns, etc.).
+
 ## Project Overview
 An estimation game app where users create questions, share links, collect guesses, and reveal results. Think "guess the number" with social features.
 
@@ -20,6 +22,8 @@ Two main tables (see `supabase/schema.sql` for full schema with RLS policies):
 **questions**
 - id, creator_id, slug (unique URL), title, description
 - true_answer (optional), unit_type (none/currency/percentage/custom), custom_unit
+- min_value, max_value (optional bounds for guesses)
+- is_public (show in public feed), password (optional access protection)
 - guesses_revealed (show guesses before answer), revealed (fully closed)
 - created_at
 
@@ -65,8 +69,9 @@ See `.env.local.supabase-local` for local Supabase development config.
 
 ## Local Development
 ```bash
-npm run dev          # Start dev server
-npm run build        # Build for production
+pnpm dev             # Start dev server
+pnpm build           # Build for production
+pnpm db:seed         # Seed local database with test data
 supabase start       # Start local Supabase (if using local instance)
 ```
 
