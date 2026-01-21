@@ -5,8 +5,14 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { User } from '@supabase/supabase-js'
 import { Button } from '@/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { CalibratedLogo } from '@/components/CalibratedLogo'
-import { FaSignOutAlt } from 'react-icons/fa'
+import { FaSignOutAlt, FaUser } from 'react-icons/fa'
 import { Profile } from '@/types/database'
 
 export function Header() {
@@ -76,20 +82,27 @@ export function Header() {
                 <Button asChild size="sm">
                   <Link href="/new">New Question</Link>
                 </Button>
-                <Link
-                  href="/profile"
-                  className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-medium text-sm hover:opacity-80 transition-opacity"
-                  title="Profile"
-                >
-                  {(profile?.display_name || user.email || 'U')[0].toUpperCase()}
-                </Link>
-                <button
-                  onClick={handleSignOut}
-                  className="text-muted-foreground hover:text-foreground"
-                  title="Sign Out"
-                >
-                  <FaSignOutAlt className="h-4 w-4" />
-                </button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-medium text-sm hover:opacity-80 transition-opacity"
+                    >
+                      {(profile?.display_name || user.email || 'U')[0].toUpperCase()}
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem asChild>
+                      <Link href="/profile" className="flex items-center gap-2 cursor-pointer">
+                        <FaUser className="h-4 w-4" />
+                        Profile
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleSignOut} className="flex items-center gap-2 cursor-pointer">
+                      <FaSignOutAlt className="h-4 w-4" />
+                      Log Out
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </>
             ) : (
               <Button asChild size="sm">
