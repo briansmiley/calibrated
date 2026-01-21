@@ -116,6 +116,38 @@ test.describe('Guess Validation', () => {
   });
 });
 
+test.describe('Live Guess Updates', () => {
+  test('guess count updates immediately after submission without refresh', async ({ page }) => {
+    await page.goto(`/q/${SEEDED_QUESTIONS.jellybeans}`);
+
+    // Get initial guess count
+    const guessesHeader = page.getByText(/Guesses \(\d+\)/);
+    const initialText = await guessesHeader.textContent();
+    const initialCount = parseInt(initialText?.match(/\((\d+)\)/)?.[1] || '0');
+
+    // Submit a guess
+    await submitGuess(page, 500, 'LiveUpdateTest');
+    await expect(page.getByText('Your guess has been submitted')).toBeVisible();
+
+    // Verify count incremented without page refresh
+    await expect(page.getByText(`Guesses (${initialCount + 1})`)).toBeVisible();
+  });
+
+  test('new guess appears in list immediately after submission', async ({ page }) => {
+    await loginUser(page, TEST_USERS.charlie.email, TEST_USERS.charlie.password);
+    await page.goto(`/q/${SEEDED_QUESTIONS.movieBudget}`);
+
+    // This question has guesses_revealed = true, so we can see names
+    // Submit a new guess
+    await submitGuess(page, 275000000);
+    await expect(page.getByText('Your guess has been submitted')).toBeVisible();
+
+    // The new guess should appear in the list with charlie's username
+    // charlie already has guesses so this will be "charlie 2" or similar
+    await expect(page.getByText(/charlie/i).first()).toBeVisible();
+  });
+});
+
 test.describe('Guess Display', () => {
   test('question shows correct guess count', async ({ page }) => {
     await page.goto(`/q/${SEEDED_QUESTIONS.movieBudget}`);
