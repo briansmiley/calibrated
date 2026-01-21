@@ -4,7 +4,7 @@ import { GuessForm } from './GuessForm'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
 import { formatValue, getUnitDisplay } from '@/lib/formatValue'
-import { formatTimestamp } from '@/lib/formatDate'
+import { LocalTime } from '@/components/LocalTime'
 import { FaEye } from 'react-icons/fa'
 
 interface Props {
@@ -50,7 +50,7 @@ export default async function QuestionPage({ params }: Props) {
             <CardDescription>{question.description}</CardDescription>
           )}
           <p className="text-xs text-muted-foreground pt-2">
-            Created {formatTimestamp(question.created_at)}
+            Created <LocalTime date={question.created_at} />
           </p>
         </CardHeader>
         {hasAnswer && (
@@ -110,9 +110,7 @@ export default async function QuestionPage({ params }: Props) {
                         </TooltipContent>
                       </Tooltip>
                     )}
-                    <span className="text-xs text-muted-foreground">
-                      {formatTimestamp(guess.created_at)}
-                    </span>
+                    <LocalTime date={guess.created_at} className="text-xs text-muted-foreground" />
                   </div>
                   {guessesRevealed ? (
                     <span className="font-mono text-foreground">

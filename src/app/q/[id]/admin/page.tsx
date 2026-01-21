@@ -5,7 +5,7 @@ import { SlugEditor } from './SlugEditor'
 import { Badge } from '@/components/ui/badge'
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
 import { formatValue } from '@/lib/formatValue'
-import { formatTimestamp } from '@/lib/formatDate'
+import { LocalTime } from '@/components/LocalTime'
 import { FaEye } from 'react-icons/fa'
 
 interface Props {
@@ -104,9 +104,7 @@ export default async function AdminPage({ params }: Props) {
                       </TooltipContent>
                     </Tooltip>
                   )}
-                  <span className="text-xs text-muted-foreground">
-                    {formatTimestamp(guess.created_at)}
-                  </span>
+                  <LocalTime date={guess.created_at} className="text-xs text-muted-foreground" />
                 </div>
                 <span className="font-mono">
                   {formatValue(guess.value, question.unit_type, question.custom_unit)}
