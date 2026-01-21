@@ -21,6 +21,8 @@ export interface Database {
           true_answer: number | null
           unit_type: UnitType
           custom_unit: string | null
+          is_public: boolean
+          password: string | null
           guesses_revealed: boolean
           revealed: boolean
           created_at: string
@@ -34,6 +36,8 @@ export interface Database {
           true_answer?: number | null
           unit_type?: UnitType
           custom_unit?: string | null
+          is_public?: boolean
+          password?: string | null
           guesses_revealed?: boolean
           revealed?: boolean
           created_at?: string
@@ -47,6 +51,8 @@ export interface Database {
           true_answer?: number | null
           unit_type?: UnitType
           custom_unit?: string | null
+          is_public?: boolean
+          password?: string | null
           guesses_revealed?: boolean
           revealed?: boolean
           created_at?: string

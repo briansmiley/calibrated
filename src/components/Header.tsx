@@ -41,6 +41,12 @@ export function Header() {
           </Link>
 
           <div className="flex items-center gap-4">
+            <Link
+              href="/feed"
+              className="text-sm text-muted-foreground hover:text-foreground"
+            >
+              Feed
+            </Link>
             {loading ? (
               <div className="h-8 w-20 animate-pulse rounded bg-muted" />
             ) : user ? (
