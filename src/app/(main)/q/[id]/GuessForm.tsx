@@ -6,6 +6,14 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 
+interface NewGuess {
+  id: string
+  display_name: string
+  value: number
+  created_at: string
+  prior_visible_guesses: number | null
+}
+
 interface Props {
   questionId: string
   userEmail: string | null
@@ -16,9 +24,10 @@ interface Props {
   maxValue: number | null
   unitPrefix: string | null
   unitSuffix: string | null
+  onGuessSubmitted?: (guess: NewGuess) => void
 }
 
-export function GuessForm({ questionId, userEmail, userId, guessesRevealed, currentGuessCount, minValue, maxValue, unitPrefix, unitSuffix }: Props) {
+export function GuessForm({ questionId, userEmail, userId, guessesRevealed, currentGuessCount, minValue, maxValue, unitPrefix, unitSuffix, onGuessSubmitted }: Props) {
   const [value, setValue] = useState('')
   const [displayName, setDisplayName] = useState('')
   const [loading, setLoading] = useState(false)
@@ -71,20 +80,35 @@ export function GuessForm({ questionId, userEmail, userId, guessesRevealed, curr
       finalDisplayName = displayName.trim() || 'Anonymous'
     }
 
-    const { error: insertError } = await supabase
+    const priorVisibleGuesses = guessesRevealed && currentGuessCount > 0 ? currentGuessCount : null
+
+    const { data: insertedGuess, error: insertError } = await supabase
       .from('guesses')
       .insert({
         question_id: questionId,
         user_id: userId,
         display_name: finalDisplayName,
         value: numValue,
-        prior_visible_guesses: guessesRevealed && currentGuessCount > 0 ? currentGuessCount : null,
+        prior_visible_guesses: priorVisibleGuesses,
       })
+      .select()
+      .single()
 
     if (insertError) {
       setError(insertError.message)
       setLoading(false)
       return
+    }
+
+    // Notify parent of the new guess
+    if (onGuessSubmitted && insertedGuess) {
+      onGuessSubmitted({
+        id: insertedGuess.id,
+        display_name: insertedGuess.display_name,
+        value: insertedGuess.value,
+        created_at: insertedGuess.created_at,
+        prior_visible_guesses: insertedGuess.prior_visible_guesses,
+      })
     }
 
     setSuccess(true)
