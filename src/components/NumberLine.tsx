@@ -136,7 +136,7 @@ export function NumberLine({ guesses, question, showAnswer = true, creatorName }
       </div>
 
       {/* Range labels */}
-      <div className="flex justify-between mt-4 text-xs text-muted-foreground">
+      <div className="flex justify-between mt-1 text-xs text-muted-foreground">
         <span>{formatValue(displayMin, question.unit_type, question.custom_unit)}</span>
         <span>{formatValue(displayMax, question.unit_type, question.custom_unit)}</span>
       </div>
