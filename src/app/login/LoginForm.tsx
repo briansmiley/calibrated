@@ -44,22 +44,30 @@ export function LoginForm() {
     setMessage(null)
 
     if (isSignUp) {
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           emailRedirectTo: `${window.location.origin}/auth/callback?redirect=${redirect}`,
         },
       })
+      console.log('Signup response:', { data, error })
       if (error) {
         setError(error.message)
-      } else {
+      } else if (data.user && !data.session) {
+        // User created but needs email confirmation
         setLoading(false)
         setIsSignUp(false)
         setMessage('Check your email to confirm your account!')
         setEmail('')
         setPassword('')
         return
+      } else if (data.user && data.session) {
+        // Email confirmation disabled, user is logged in
+        window.location.href = redirect
+        return
+      } else {
+        setError('Something went wrong. Please try again.')
       }
     } else {
       const { error } = await supabase.auth.signInWithPassword({
