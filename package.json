@@ -12,6 +12,7 @@
     "start": "next start",
     "lint": "eslint",
     "db:seed": "tsx scripts/seed.ts",
+    "db:types": "supabase gen types typescript --local > src/types/database.ts",
     "test": "pnpm run test:e2e",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
