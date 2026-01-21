@@ -14,6 +14,8 @@ CREATE TABLE public.questions (
   true_answer numeric,
   unit_type unit_type DEFAULT 'none',
   custom_unit text,
+  is_public boolean DEFAULT false,
+  password text,
   guesses_revealed boolean DEFAULT false,
   revealed boolean DEFAULT false,
   created_at timestamptz DEFAULT now()
@@ -81,5 +83,6 @@ CREATE POLICY "Anyone can submit guesses"
 -- Indexes for performance
 CREATE INDEX idx_questions_creator_id ON public.questions(creator_id);
 CREATE INDEX idx_questions_slug ON public.questions(slug);
+CREATE INDEX idx_questions_is_public ON public.questions(is_public) WHERE is_public = true;
 CREATE INDEX idx_guesses_question_id ON public.guesses(question_id);
 CREATE INDEX idx_guesses_user_id ON public.guesses(user_id);

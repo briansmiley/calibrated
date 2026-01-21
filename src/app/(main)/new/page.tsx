@@ -25,6 +25,8 @@ export default function NewQuestionPage() {
   const [unitType, setUnitType] = useState<UnitType>('none')
   const [currencySymbol, setCurrencySymbol] = useState('$')
   const [customUnit, setCustomUnit] = useState('')
+  const [isPublic, setIsPublic] = useState(false)
+  const [password, setPassword] = useState('')
 
   const handleUnitTypeChange = (value: UnitType) => {
     setUnitType(value)
@@ -97,6 +99,8 @@ export default function NewQuestionPage() {
         true_answer: trueAnswer ? parseFloat(trueAnswer) : null,
         unit_type: unitType,
         custom_unit: unitType === 'currency' ? currencySymbol : unitType === 'custom' ? customUnit : null,
+        is_public: isPublic,
+        password: password || null,
       })
       .select()
       .single()
@@ -242,6 +246,38 @@ export default function NewQuestionPage() {
                     className="w-32"
                   />
                 )}
+              </div>
+            </div>
+
+            <div className="space-y-4 border-t border-border pt-6">
+              <div className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  id="isPublic"
+                  checked={isPublic}
+                  onChange={(e) => setIsPublic(e.target.checked)}
+                  className="h-4 w-4 rounded border-border"
+                />
+                <Label htmlFor="isPublic" className="font-normal cursor-pointer">
+                  Show in public feed
+                </Label>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Public questions appear in the community feed. Otherwise, only people with the link can access it.
+              </p>
+
+              <div className="space-y-2">
+                <Label htmlFor="password">Password Protection (optional)</Label>
+                <Input
+                  id="password"
+                  type="text"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Leave blank for no password"
+                />
+                <p className="text-xs text-muted-foreground">
+                  If set, users must enter this password to view or guess on the question.
+                </p>
               </div>
             </div>
 
