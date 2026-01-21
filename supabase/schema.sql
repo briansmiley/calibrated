@@ -16,6 +16,8 @@ CREATE TABLE public.questions (
   custom_unit text,
   is_public boolean DEFAULT false,
   password text,
+  min_value numeric,
+  max_value numeric,
   guesses_revealed boolean DEFAULT false,
   revealed boolean DEFAULT false,
   created_at timestamptz DEFAULT now()

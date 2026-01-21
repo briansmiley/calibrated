@@ -23,6 +23,8 @@ export interface Database {
           custom_unit: string | null
           is_public: boolean
           password: string | null
+          min_value: number | null
+          max_value: number | null
           guesses_revealed: boolean
           revealed: boolean
           created_at: string
@@ -38,6 +40,8 @@ export interface Database {
           custom_unit?: string | null
           is_public?: boolean
           password?: string | null
+          min_value?: number | null
+          max_value?: number | null
           guesses_revealed?: boolean
           revealed?: boolean
           created_at?: string
@@ -53,6 +57,8 @@ export interface Database {
           custom_unit?: string | null
           is_public?: boolean
           password?: string | null
+          min_value?: number | null
+          max_value?: number | null
           guesses_revealed?: boolean
           revealed?: boolean
           created_at?: string

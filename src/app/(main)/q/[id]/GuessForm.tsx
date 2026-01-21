@@ -12,9 +12,11 @@ interface Props {
   userId: string | null
   guessesRevealed: boolean
   currentGuessCount: number
+  minValue: number | null
+  maxValue: number | null
 }
 
-export function GuessForm({ questionId, userEmail, userId, guessesRevealed, currentGuessCount }: Props) {
+export function GuessForm({ questionId, userEmail, userId, guessesRevealed, currentGuessCount, minValue, maxValue }: Props) {
   const [value, setValue] = useState('')
   const [displayName, setDisplayName] = useState('')
   const [loading, setLoading] = useState(false)
@@ -30,6 +32,18 @@ export function GuessForm({ questionId, userEmail, userId, guessesRevealed, curr
     const numValue = parseFloat(value)
     if (isNaN(numValue)) {
       setError('Please enter a valid number')
+      setLoading(false)
+      return
+    }
+
+    if (minValue !== null && numValue < minValue) {
+      setError(`Guess must be at least ${minValue}`)
+      setLoading(false)
+      return
+    }
+
+    if (maxValue !== null && numValue > maxValue) {
+      setError(`Guess must be at most ${maxValue}`)
       setLoading(false)
       return
     }
@@ -122,7 +136,18 @@ export function GuessForm({ questionId, userEmail, userId, guessesRevealed, curr
       )}
 
       <div className="space-y-2">
-        <Label htmlFor="value">Your Guess *</Label>
+        <div className="flex items-baseline justify-between">
+          <Label htmlFor="value">Your Guess *</Label>
+          {(minValue !== null || maxValue !== null) && (
+            <span className="text-xs text-muted-foreground">
+              {minValue !== null && maxValue !== null
+                ? `${minValue} – ${maxValue}`
+                : minValue !== null
+                ? `${minValue} or more`
+                : `${maxValue} or less`}
+            </span>
+          )}
+        </div>
         <Input
           id="value"
           type="number"
@@ -131,6 +156,8 @@ export function GuessForm({ questionId, userEmail, userId, guessesRevealed, curr
           onChange={(e) => setValue(e.target.value)}
           required
           placeholder="Enter a number"
+          min={minValue ?? undefined}
+          max={maxValue ?? undefined}
         />
       </div>
 
