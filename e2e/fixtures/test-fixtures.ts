@@ -38,8 +38,8 @@ export async function loginUser(page: Page, email: string, password: string): Pr
  * Log out the current user
  */
 export async function logoutUser(page: Page): Promise<void> {
-  // The sign out button is a regular button element, not a shadcn Button
-  const logoutButton = page.getByRole('button', { name: 'Sign Out' });
+  // The sign out button has title="Sign Out" and contains an icon
+  const logoutButton = page.locator('button[title="Sign Out"]');
   await logoutButton.click();
   await expect(page).toHaveURL('/');
 }
