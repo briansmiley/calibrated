@@ -83,17 +83,17 @@ For OAuth testing locally with production Supabase, temporarily change Site URL 
 The project uses Playwright for end-to-end testing. Tests are in the `/e2e` directory.
 
 ```bash
-npm run test:e2e        # Run all e2e tests (headless)
-npm run test:e2e:ui     # Run tests with Playwright UI
-npm run test:e2e:headed # Run tests in headed browser mode
-npm run test:e2e:debug  # Debug tests step-by-step
-npm run test:report     # View HTML test report
+pnpm test:e2e        # Run all e2e tests (headless)
+pnpm test:e2e:ui     # Run tests with Playwright UI
+pnpm test:e2e:headed # Run tests in headed browser mode
+pnpm test:e2e:debug  # Debug tests step-by-step
+pnpm test:report     # View HTML test report
 ```
 
 **Test Setup Requirements:**
 1. Start local Supabase: `supabase start`
-2. Seed test data: `npm run db:seed` (if seed script exists)
-3. Ensure test users exist (alice@example.com, bob@example.com with password: password123)
+2. Seed test data: `pnpm db:seed`
+3. Test users created by seed: alice@example.com, bob@example.com, charlie@example.com (password: password123)
 
 **Test Structure:**
 - `/e2e/fixtures/` - Test utilities, helpers, and fixtures
@@ -101,20 +101,20 @@ npm run test:report     # View HTML test report
 - `/e2e/questions.spec.ts` - Question creation and viewing
 - `/e2e/guesses.spec.ts` - Guess submission and validation
 - `/e2e/results.spec.ts` - Results page and number line
-- `/e2e/dashboard.spec.ts` - Dashboard functionality
 - `/e2e/feed.spec.ts` - Public feed and password protection
 
 **Running Specific Tests:**
 ```bash
-npm run test:e2e -- e2e/auth.spec.ts        # Run only auth tests
-npm run test:e2e -- --grep "login"           # Run tests matching "login"
+pnpm test:e2e -- e2e/auth.spec.ts        # Run only auth tests
+pnpm test:e2e -- --grep "login"          # Run tests matching "login"
 ```
 
 **Pre-PR Checklist:**
 Before opening a PR, ensure all relevant tests pass:
-1. Run the full test suite: `npm run test:e2e`
-2. If adding new features, add corresponding tests
-3. Review test report for any failures: `npm run test:report`
+1. Start local Supabase and seed: `supabase start && pnpm db:seed`
+2. Run the full test suite: `pnpm test:e2e`
+3. If adding new features, add corresponding tests
+4. Review test report for any failures: `pnpm test:report`
 
 ## File Structure Highlights
 - `/src/app/q/[id]/` - Question pages (public view, admin, results)
