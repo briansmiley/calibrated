@@ -36,14 +36,14 @@ export function GuessForm({ questionId, userEmail, userId, guessesRevealed, curr
       return
     }
 
-    if (minValue !== null && numValue < minValue) {
-      setError(`Guess must be at least ${minValue}`)
-      setLoading(false)
-      return
-    }
-
-    if (maxValue !== null && numValue > maxValue) {
-      setError(`Guess must be at most ${maxValue}`)
+    const outOfRange = (minValue !== null && numValue < minValue) || (maxValue !== null && numValue > maxValue)
+    if (outOfRange) {
+      const rangeStr = minValue !== null && maxValue !== null
+        ? `${minValue} – ${maxValue}`
+        : minValue !== null
+        ? `${minValue} or more`
+        : `${maxValue} or less`
+      setError(`Guess must be in range ${rangeStr}`)
       setLoading(false)
       return
     }
@@ -158,6 +158,7 @@ export function GuessForm({ questionId, userEmail, userId, guessesRevealed, curr
           placeholder="Enter a number"
           min={minValue ?? undefined}
           max={maxValue ?? undefined}
+          className="w-48"
         />
       </div>
 
