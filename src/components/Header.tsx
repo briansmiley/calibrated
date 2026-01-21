@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { User } from '@supabase/supabase-js'
 import { Button } from '@/components/ui/button'
-import { Logo } from '@/components/Logo'
+import { CalibratedLogo } from '@/components/CalibratedLogo'
 
 export function Header() {
   const [user, setUser] = useState<User | null>(null)
@@ -36,9 +36,8 @@ export function Header() {
     <header className="border-b border-border">
       <nav className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 text-xl font-bold text-foreground">
-            <Logo className="w-7 h-7" />
-            Calibrated
+          <Link href="/" className="text-foreground">
+            <CalibratedLogo size="sm" />
           </Link>
 
           <div className="flex items-center gap-4">
@@ -64,7 +63,7 @@ export function Header() {
               </>
             ) : (
               <Button asChild size="sm">
-                <Link href="/login?mode=signin">Sign In</Link>
+                <Link href="/login">Sign In/Up</Link>
               </Button>
             )}
           </div>

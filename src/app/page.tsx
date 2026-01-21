@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { Button } from '@/components/ui/button'
+import { CalibratedLogo } from '@/components/CalibratedLogo'
 
 export default async function Home() {
   const supabase = await createClient()
@@ -12,16 +12,16 @@ export default async function Home() {
   }
 
   return (
-    <div className="flex flex-col items-center justify-center py-16">
-      <h1 className="text-6xl font-bold text-foreground text-center">
-        Calibrated
+    <div className="flex flex-col items-center justify-center min-h-screen px-4">
+      <h1 className="text-foreground text-center">
+        <CalibratedLogo size="lg" />
       </h1>
       <p className="mt-4 text-xl text-muted-foreground text-center italic">
         Take a guess
       </p>
 
       {/* Number line visualization */}
-      <div className="mt-12 w-full max-w-md px-4">
+      <div className="mt-12 w-full max-w-md">
         <div className="relative">
           {/* The line */}
           <div className="h-0.5 bg-muted-foreground/30 w-full" />
@@ -56,11 +56,12 @@ export default async function Home() {
         </div>
       </div>
 
-      <div className="mt-12">
-        <Button asChild size="lg">
-          <Link href="/login">Get Started</Link>
-        </Button>
-      </div>
+      <Link
+        href="/login"
+        className="mt-16 text-sm text-muted-foreground/50 hover:text-muted-foreground transition-colors"
+      >
+        Sign In / Up
+      </Link>
     </div>
   )
 }
