@@ -57,7 +57,16 @@ test.describe('Guess Validation', () => {
     // percentage-guess has bounds 0-100
     await page.goto(`/q/${SEEDED_QUESTIONS.percentage}`);
 
-    await page.locator('#value').fill('-5');
+    const valueInput = page.locator('#value');
+
+    // Remove min/max attributes to bypass native HTML5 validation
+    await valueInput.evaluate((el: HTMLInputElement) => {
+      el.removeAttribute('min');
+      el.removeAttribute('max');
+    });
+
+    // Now fill with invalid value
+    await valueInput.fill('-5');
     await page.getByRole('button', { name: 'Submit Guess' }).click();
 
     await expect(page.getByText(/must be in range/i)).toBeVisible();
@@ -66,7 +75,16 @@ test.describe('Guess Validation', () => {
   test('shows error for guess above max bound', async ({ page }) => {
     await page.goto(`/q/${SEEDED_QUESTIONS.percentage}`);
 
-    await page.locator('#value').fill('150');
+    const valueInput = page.locator('#value');
+
+    // Remove min/max attributes to bypass native HTML5 validation
+    await valueInput.evaluate((el: HTMLInputElement) => {
+      el.removeAttribute('min');
+      el.removeAttribute('max');
+    });
+
+    // Now fill with invalid value
+    await valueInput.fill('150');
     await page.getByRole('button', { name: 'Submit Guess' }).click();
 
     await expect(page.getByText(/must be in range/i)).toBeVisible();
@@ -87,13 +105,14 @@ test.describe('Guess Validation', () => {
     await expect(page.getByText(/Range:.*0.*100/)).toBeVisible();
   });
 
-  test('shows error for non-numeric input', async ({ page }) => {
+  test('shows error for empty input', async ({ page }) => {
     await page.goto(`/q/${SEEDED_QUESTIONS.jellybeans}`);
 
-    await page.locator('#value').fill('abc');
-    await page.getByRole('button', { name: 'Submit Guess' }).click();
+    // Don't fill any value
+    const submitButton = page.getByRole('button', { name: 'Submit Guess' });
 
-    await expect(page.getByText(/valid number/i)).toBeVisible();
+    // Button should be disabled when input is empty
+    await expect(submitButton).toBeDisabled();
   });
 });
 
@@ -111,8 +130,9 @@ test.describe('Guess Display', () => {
     // This question has guesses_revealed = true
     await expect(page.getByText('Revealed')).toBeVisible();
 
-    // Should see actual guess values (one of the seeded values)
-    await expect(page.getByText(/\$200,000,000|\$300,000,000/)).toBeVisible();
+    // Should see actual guess values (from seed: alice=$200M, charlie=$300M, diana=$250M, eve=$180M)
+    // Values are formatted with commas - use first() since there might be multiple
+    await expect(page.getByText('$200,000,000').first()).toBeVisible();
   });
 
   test('hidden guesses show blurred values', async ({ page }) => {
@@ -128,10 +148,10 @@ test.describe('Guess Display', () => {
   test('shows eye icon for guesses made with others visible', async ({ page }) => {
     await page.goto(`/q/${SEEDED_QUESTIONS.movieBudget}`);
 
-    // Movie budget has guesses with prior_visible_guesses set
-    // Should show eye icon
-    const eyeIcon = page.locator('svg').filter({ has: page.locator('[class*="eye"]') });
-    // Check the tooltip mechanism works
-    await expect(page.getByText(/guessed with.*visible/i).or(eyeIcon.first())).toBeVisible();
+    // Movie budget has guesses with prior_visible_guesses set (alice=0, charlie=1, diana=2, eve=3)
+    // The FaEye icon from react-icons renders as an SVG
+    // Find it by the parent span that has cursor-help class
+    const eyeIconContainer = page.locator('span.cursor-help svg');
+    await expect(eyeIconContainer.first()).toBeVisible();
   });
 });

@@ -13,8 +13,9 @@ test.describe('Results Page', () => {
     await page.goto(`/q/${SEEDED_QUESTIONS.spotifySongs}/results`);
 
     // Spotify question has true_answer = 100,000,000
-    await expect(page.getByText('True Answer:')).toBeVisible();
-    await expect(page.getByText('100,000,000')).toBeVisible();
+    // The text is "True Answer: " followed by the value
+    await expect(page.getByText(/True Answer:/)).toBeVisible();
+    await expect(page.getByText('100,000,000').first()).toBeVisible();
   });
 
   test('shows all guesses sorted by value', async ({ page }) => {
@@ -33,9 +34,12 @@ test.describe('Results Page', () => {
     await page.goto(`/q/${SEEDED_QUESTIONS.spotifySongs}/results`);
 
     // diana guessed exactly 100,000,000 which matches the true answer
-    // Her row should have green highlighting (bg-green-900/50)
-    const dianaRow = page.locator('text=diana').locator('..');
-    await expect(dianaRow.or(page.locator('.bg-green-900\\/50'))).toBeVisible();
+    // Her row should have green highlighting (border-green-500)
+    // Find diana's name and verify the row has the highlighting
+    await expect(page.getByText('diana')).toBeVisible();
+    // The exact match row has border-2 border-green-500 class
+    const highlightedRow = page.locator('.border-green-500');
+    await expect(highlightedRow).toBeVisible();
   });
 
   test('non-revealed question redirects away from results', async ({ page }) => {
@@ -106,7 +110,12 @@ test.describe('Number Line Visualization', () => {
     await page.goto(`/q/${SEEDED_QUESTIONS.spotifySongs}/results`);
 
     // Range labels are at the bottom showing min and max values
-    const rangeLabels = page.locator('.flex.justify-between .text-xs');
-    await expect(rangeLabels).toHaveCount(2);
+    // The container div has classes: flex justify-between mt-1 text-xs text-muted-foreground
+    // Looking for the formatted min/max values that appear on the number line
+    // Based on seed data: guesses are 75M-120M, answer is 100M, so range should include those
+    const rangeLabelContainer = page.locator('.flex.justify-between.text-xs');
+    await expect(rangeLabelContainer).toBeVisible();
+    // Should have 2 children (min and max labels)
+    await expect(rangeLabelContainer.locator('span')).toHaveCount(2);
   });
 });
