@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
 import { formatValue, getUnitDisplay } from '@/lib/formatValue'
@@ -22,6 +23,7 @@ export function QuestionContent({ question, guesses: initialGuesses, userEmail, 
   const { prefix, suffix } = getUnitDisplay(question.unit_type, question.custom_unit)
   const hasAnswer = question.true_answer !== null
   const guessesRevealed = question.guesses_revealed
+  const isCreator = userId === question.creator_id
 
   const handleGuessSubmitted = (newGuess: { id: string; display_name: string | null; value: number; created_at: string; prior_visible_guesses: number | null }) => {
     setGuesses(prev => [...prev, newGuess as Guess])
@@ -31,7 +33,17 @@ export function QuestionContent({ question, guesses: initialGuesses, userEmail, 
     <div className="mx-auto max-w-xl">
       <Card>
         <CardHeader>
-          <CardTitle>{question.title}</CardTitle>
+          <div className="flex items-start justify-between gap-4">
+            <CardTitle>{question.title}</CardTitle>
+            {isCreator && (
+              <Link
+                href={`/q/${question.slug}/admin`}
+                className="text-sm text-primary hover:underline shrink-0"
+              >
+                Manage
+              </Link>
+            )}
+          </div>
           {question.description && (
             <CardDescription>{question.description}</CardDescription>
           )}
