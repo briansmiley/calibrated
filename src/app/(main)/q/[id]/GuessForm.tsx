@@ -14,9 +14,11 @@ interface Props {
   currentGuessCount: number
   minValue: number | null
   maxValue: number | null
+  unitPrefix: string | null
+  unitSuffix: string | null
 }
 
-export function GuessForm({ questionId, userEmail, userId, guessesRevealed, currentGuessCount, minValue, maxValue }: Props) {
+export function GuessForm({ questionId, userEmail, userId, guessesRevealed, currentGuessCount, minValue, maxValue, unitPrefix, unitSuffix }: Props) {
   const [value, setValue] = useState('')
   const [displayName, setDisplayName] = useState('')
   const [loading, setLoading] = useState(false)
@@ -136,30 +138,32 @@ export function GuessForm({ questionId, userEmail, userId, guessesRevealed, curr
       )}
 
       <div className="space-y-2">
-        <div className="flex items-baseline justify-between">
-          <Label htmlFor="value">Your Guess *</Label>
+        <Label htmlFor="value">Your Guess *</Label>
+        <div className="flex items-center gap-2">
+          {unitPrefix && <span className="text-muted-foreground">{unitPrefix}</span>}
+          <Input
+            id="value"
+            type="number"
+            step="any"
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            required
+            placeholder="Enter a number"
+            min={minValue ?? undefined}
+            max={maxValue ?? undefined}
+            className="w-48"
+          />
+          {unitSuffix && <span className="text-muted-foreground">{unitSuffix}</span>}
           {(minValue !== null || maxValue !== null) && (
             <span className="text-xs text-muted-foreground">
-              {minValue !== null && maxValue !== null
+              Range: {minValue !== null && maxValue !== null
                 ? `${minValue} – ${maxValue}`
                 : minValue !== null
-                ? `${minValue} or more`
-                : `${maxValue} or less`}
+                ? `${minValue}+`
+                : `≤${maxValue}`}
             </span>
           )}
         </div>
-        <Input
-          id="value"
-          type="number"
-          step="any"
-          value={value}
-          onChange={(e) => setValue(e.target.value)}
-          required
-          placeholder="Enter a number"
-          min={minValue ?? undefined}
-          max={maxValue ?? undefined}
-          className="w-48"
-        />
       </div>
 
       <Button type="submit" disabled={loading || !value} className="w-full">

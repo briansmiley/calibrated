@@ -58,6 +58,8 @@ export function QuestionContent({ question, guesses, userEmail, userId }: Questi
             currentGuessCount={guesses.length}
             minValue={question.min_value}
             maxValue={question.max_value}
+            unitPrefix={prefix}
+            unitSuffix={suffix}
           />
         </CardContent>
       </Card>
