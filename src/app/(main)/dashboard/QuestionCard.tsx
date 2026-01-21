@@ -45,7 +45,7 @@ export function QuestionCard({ question }: Props) {
   }
 
   return (
-    <Link href={`/q/${question.slug}/admin`}>
+    <Link href={`/q/${question.slug}/admin`} className="block">
       <Card className="transition-colors hover:bg-muted/50 cursor-pointer">
         <CardContent className="pt-6">
           <div className="flex items-start justify-between">
