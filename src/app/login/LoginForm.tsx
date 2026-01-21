@@ -54,7 +54,11 @@ export function LoginForm() {
       if (error) {
         setError(error.message)
       } else {
-        router.push('/login?mode=signin&message=' + encodeURIComponent('Check your email to confirm your account!'))
+        setLoading(false)
+        setIsSignUp(false)
+        setMessage('Check your email to confirm your account!')
+        setEmail('')
+        setPassword('')
         return
       }
     } else {
