@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import { User } from '@supabase/supabase-js'
 import { Button } from '@/components/ui/button'
 import { CalibratedLogo } from '@/components/CalibratedLogo'
+import { FaSignOutAlt } from 'react-icons/fa'
 
 export function Header() {
   const [user, setUser] = useState<User | null>(null)
@@ -62,9 +63,10 @@ export function Header() {
                 </Button>
                 <button
                   onClick={handleSignOut}
-                  className="text-sm text-muted-foreground hover:text-foreground"
+                  className="text-muted-foreground hover:text-foreground"
+                  title="Sign Out"
                 >
-                  Sign Out
+                  <FaSignOutAlt className="h-4 w-4" />
                 </button>
               </>
             ) : (
