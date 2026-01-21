@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
 import { formatValue } from '@/lib/formatValue'
 import { FaEye } from 'react-icons/fa'
+import { NumberLine } from '@/components/NumberLine'
 
 interface Props {
   params: Promise<{ id: string }>
@@ -54,6 +55,10 @@ export default async function ResultsPage({ params }: Props) {
           <CardTitle className="text-lg">Results</CardTitle>
         </CardHeader>
         <CardContent>
+          {guesses && guesses.length > 0 && (
+            <NumberLine guesses={guesses} question={question} />
+          )}
+
           {question.true_answer !== null && (
             <div className="mb-4 rounded-md bg-green-900/50 border border-green-700 p-4">
               <p className="text-sm text-green-200">
