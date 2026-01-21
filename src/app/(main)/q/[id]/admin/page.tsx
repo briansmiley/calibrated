@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { notFound, redirect } from 'next/navigation'
 import { AdminControls } from './AdminControls'
@@ -48,7 +49,15 @@ export default async function AdminPage({ params }: Props) {
     <div className="mx-auto max-w-xl space-y-8">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold">{question.title}</h1>
+        <div className="flex items-start justify-between gap-4">
+          <h1 className="text-2xl font-bold">{question.title}</h1>
+          <Link
+            href={`/q/${question.slug}`}
+            className="text-sm text-primary hover:underline shrink-0"
+          >
+            View Public
+          </Link>
+        </div>
         {question.description && (
           <p className="mt-1 text-muted-foreground">{question.description}</p>
         )}
