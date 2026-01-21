@@ -89,7 +89,7 @@ export function NumberLine({ guesses, question, showAnswer = true, creatorName }
                     : 'w-3 h-3 bg-zinc-500'
                 }`}
               >
-                {isHovered && formatValue(guess.value, question.unit_type, question.custom_unit)}
+                {isHovered && formatValue(guess.value, question.unit_type ?? 'none', question.custom_unit)}
               </div>
               {isHovered && (
                 <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 whitespace-nowrap z-50">
@@ -128,7 +128,7 @@ export function NumberLine({ guesses, question, showAnswer = true, creatorName }
             )}
             <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 whitespace-nowrap">
               <p className="text-xs font-medium text-green-500">
-                {formatValue(trueAnswer!, question.unit_type, question.custom_unit)}
+                {formatValue(trueAnswer!, question.unit_type ?? 'none', question.custom_unit)}
               </p>
             </div>
           </div>
@@ -137,8 +137,8 @@ export function NumberLine({ guesses, question, showAnswer = true, creatorName }
 
       {/* Range labels */}
       <div className="flex justify-between mt-1 text-xs text-muted-foreground">
-        <span>{formatValue(displayMin, question.unit_type, question.custom_unit)}</span>
-        <span>{formatValue(displayMax, question.unit_type, question.custom_unit)}</span>
+        <span>{formatValue(displayMin, question.unit_type ?? 'none', question.custom_unit)}</span>
+        <span>{formatValue(displayMax, question.unit_type ?? 'none', question.custom_unit)}</span>
       </div>
     </div>
   )

@@ -81,9 +81,11 @@ export default async function FeedPage({ searchParams }: Props) {
                         <Lock className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                       )}
                     </div>
-                    <p className="text-xs text-muted-foreground pt-2">
-                      <LocalTime date={question.created_at} />
-                    </p>
+                    {question.created_at && (
+                      <p className="text-xs text-muted-foreground pt-2">
+                        <LocalTime date={question.created_at} />
+                      </p>
+                    )}
                   </CardHeader>
                 </Card>
               </Link>

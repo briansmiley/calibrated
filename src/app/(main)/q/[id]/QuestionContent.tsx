@@ -20,13 +20,13 @@ interface QuestionContentProps {
 
 export function QuestionContent({ question, guesses: initialGuesses, userEmail, userId }: QuestionContentProps) {
   const [guesses, setGuesses] = useState<Guess[]>(initialGuesses)
-  const { prefix, suffix } = getUnitDisplay(question.unit_type, question.custom_unit)
+  const { prefix, suffix } = getUnitDisplay(question.unit_type ?? 'none', question.custom_unit)
   const hasAnswer = question.true_answer !== null
-  const guessesRevealed = question.guesses_revealed
+  const guessesRevealed = question.guesses_revealed ?? false
   const isCreator = userId === question.creator_id
   const shortId = question.id.slice(0, 7)
 
-  const handleGuessSubmitted = (newGuess: { id: string; display_name: string | null; value: number; created_at: string; prior_visible_guesses: number | null }) => {
+  const handleGuessSubmitted = (newGuess: { id: string; display_name: string | null; value: number; created_at: string | null; prior_visible_guesses: number | null }) => {
     setGuesses(prev => [...prev, newGuess as Guess])
   }
 
@@ -48,9 +48,11 @@ export function QuestionContent({ question, guesses: initialGuesses, userEmail, 
           {question.description && (
             <CardDescription className="text-base text-foreground/80">{question.description}</CardDescription>
           )}
-          <p className="text-xs text-muted-foreground pt-2">
-            Created <LocalTime date={question.created_at} />
-          </p>
+          {question.created_at && (
+            <p className="text-xs text-muted-foreground pt-2">
+              Created <LocalTime date={question.created_at} />
+            </p>
+          )}
         </CardHeader>
         {hasAnswer && (
           <CardContent>
@@ -114,11 +116,11 @@ export function QuestionContent({ question, guesses: initialGuesses, userEmail, 
                         </TooltipContent>
                       </Tooltip>
                     )}
-                    <LocalTime date={guess.created_at} className="text-xs text-muted-foreground" />
+                    {guess.created_at && <LocalTime date={guess.created_at} className="text-xs text-muted-foreground" />}
                   </div>
                   {guessesRevealed ? (
                     <span className="font-mono text-foreground">
-                      {formatValue(guess.value, question.unit_type, question.custom_unit)}
+                      {formatValue(guess.value, question.unit_type ?? 'none', question.custom_unit)}
                     </span>
                   ) : (
                     <div className="flex items-center gap-1 text-sm text-muted-foreground">

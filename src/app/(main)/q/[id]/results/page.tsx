@@ -66,7 +66,7 @@ export default async function ResultsPage({ params }: Props) {
           {question.true_answer !== null && (
             <div className="mb-4 rounded-md bg-green-900/50 border border-green-700 p-4">
               <p className="text-sm text-green-200">
-                True Answer: <span className="text-lg font-bold">{formatValue(question.true_answer, question.unit_type, question.custom_unit)}</span>
+                True Answer: <span className="text-lg font-bold">{formatValue(question.true_answer, question.unit_type ?? 'none', question.custom_unit)}</span>
               </p>
             </div>
           )}
@@ -107,7 +107,7 @@ export default async function ResultsPage({ params }: Props) {
                       )}
                     </div>
                     <span className={`text-lg font-bold ${isAnswer ? 'text-green-300' : 'text-foreground'}`}>
-                      {formatValue(guess.value, question.unit_type, question.custom_unit)}
+                      {formatValue(guess.value, question.unit_type ?? 'none', question.custom_unit)}
                     </span>
                   </div>
                 )

@@ -74,7 +74,7 @@ export default async function AdminPage({ params }: Props) {
           </Badge>
           {question.true_answer !== null && (
             <span className="text-sm text-muted-foreground">
-              Answer: <span className="font-medium text-foreground">{formatValue(question.true_answer, question.unit_type, question.custom_unit)}</span>
+              Answer: <span className="font-medium text-foreground">{formatValue(question.true_answer, question.unit_type ?? 'none', question.custom_unit)}</span>
             </span>
           )}
         </div>
@@ -113,10 +113,10 @@ export default async function AdminPage({ params }: Props) {
                       </TooltipContent>
                     </Tooltip>
                   )}
-                  <LocalTime date={guess.created_at} className="text-xs text-muted-foreground" />
+                  {guess.created_at && <LocalTime date={guess.created_at} className="text-xs text-muted-foreground" />}
                 </div>
                 <span className="font-mono">
-                  {formatValue(guess.value, question.unit_type, question.custom_unit)}
+                  {formatValue(guess.value, question.unit_type ?? 'none', question.custom_unit)}
                 </span>
               </div>
             ))}
@@ -128,8 +128,8 @@ export default async function AdminPage({ params }: Props) {
       <AdminControls
         questionId={question.id}
         shortId={shortId}
-        guessesRevealed={question.guesses_revealed}
-        revealed={question.revealed}
+        guessesRevealed={question.guesses_revealed ?? false}
+        revealed={question.revealed ?? false}
         guessCount={guessCount}
         hasAnswer={question.true_answer !== null}
       />

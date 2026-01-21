@@ -58,7 +58,7 @@ export function QuestionCard({ question }: Props) {
               )}
               <div className="mt-2 flex items-center gap-2">
                 <span className="text-xs text-muted-foreground">
-                  Created {formatDate(question.created_at)}
+                  Created {question.created_at ? formatDate(question.created_at) : 'recently'}
                 </span>
                 {question.revealed ? (
                   <Badge variant="secondary" className="bg-green-900/50 text-green-300">

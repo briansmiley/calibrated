@@ -16,7 +16,7 @@
     "start": "next start",
     "lint": "eslint",
     "db:seed": "tsx scripts/seed.ts",
-    "db:types": "supabase gen types typescript --local > src/types/database.ts",
+    "db:types": "supabase gen types typescript --project-id zxaxpoerzsgeomaqjbsc > src/types/database.ts && echo '\n// Convenience type exports\nexport type UnitType = Database[\"public\"][\"Enums\"][\"unit_type\"]\nexport type Question = Database[\"public\"][\"Tables\"][\"questions\"][\"Row\"]\nexport type QuestionInsert = Database[\"public\"][\"Tables\"][\"questions\"][\"Insert\"]\nexport type Guess = Database[\"public\"][\"Tables\"][\"guesses\"][\"Row\"]\nexport type GuessInsert = Database[\"public\"][\"Tables\"][\"guesses\"][\"Insert\"]\nexport type Profile = Database[\"public\"][\"Tables\"][\"profiles\"][\"Row\"]\nexport type ProfileUpdate = Database[\"public\"][\"Tables\"][\"profiles\"][\"Update\"]' >> src/types/database.ts",
     "test": "pnpm run test:e2e",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",

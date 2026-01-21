@@ -10,7 +10,7 @@ interface NewGuess {
   id: string
   display_name: string | null
   value: number
-  created_at: string
+  created_at: string | null
   prior_visible_guesses: number | null
 }
 

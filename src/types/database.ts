@@ -7,36 +7,16 @@ export type Json =
   | Json[]
 
 export type Database = {
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "14.1"
   }
   public: {
     Tables: {
       guesses: {
         Row: {
-          created_at: string
+          created_at: string | null
           display_name: string | null
           id: string
           prior_visible_guesses: number | null
@@ -45,7 +25,7 @@ export type Database = {
           value: number
         }
         Insert: {
-          created_at?: string
+          created_at?: string | null
           display_name?: string | null
           id?: string
           prior_visible_guesses?: number | null
@@ -54,7 +34,7 @@ export type Database = {
           value: number
         }
         Update: {
-          created_at?: string
+          created_at?: string | null
           display_name?: string | null
           id?: string
           prior_visible_guesses?: number | null
@@ -95,52 +75,52 @@ export type Database = {
       }
       questions: {
         Row: {
-          created_at: string
+          created_at: string | null
           creator_id: string
           custom_unit: string | null
           description: string | null
-          guesses_revealed: boolean
+          guesses_revealed: boolean | null
           id: string
-          is_public: boolean
+          is_public: boolean | null
           max_value: number | null
           min_value: number | null
           password: string | null
-          revealed: boolean
+          revealed: boolean | null
           title: string
           true_answer: number | null
-          unit_type: Database["public"]["Enums"]["unit_type"]
+          unit_type: Database["public"]["Enums"]["unit_type"] | null
         }
         Insert: {
-          created_at?: string
+          created_at?: string | null
           creator_id: string
           custom_unit?: string | null
           description?: string | null
-          guesses_revealed?: boolean
+          guesses_revealed?: boolean | null
           id?: string
-          is_public?: boolean
+          is_public?: boolean | null
           max_value?: number | null
           min_value?: number | null
           password?: string | null
-          revealed?: boolean
+          revealed?: boolean | null
           title: string
           true_answer?: number | null
-          unit_type?: Database["public"]["Enums"]["unit_type"]
+          unit_type?: Database["public"]["Enums"]["unit_type"] | null
         }
         Update: {
-          created_at?: string
+          created_at?: string | null
           creator_id?: string
           custom_unit?: string | null
           description?: string | null
-          guesses_revealed?: boolean
+          guesses_revealed?: boolean | null
           id?: string
-          is_public?: boolean
+          is_public?: boolean | null
           max_value?: number | null
           min_value?: number | null
           password?: string | null
-          revealed?: boolean
+          revealed?: boolean | null
           title?: string
           true_answer?: number | null
-          unit_type?: Database["public"]["Enums"]["unit_type"]
+          unit_type?: Database["public"]["Enums"]["unit_type"] | null
         }
         Relationships: []
       }
@@ -149,7 +129,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      check_email_exists: { Args: { email_to_check: string }; Returns: boolean }
     }
     Enums: {
       unit_type: "none" | "currency" | "percentage" | "custom"
@@ -278,9 +258,6 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {
       unit_type: ["none", "currency", "percentage", "custom"],
@@ -296,4 +273,3 @@ export type Guess = Database["public"]["Tables"]["guesses"]["Row"]
 export type GuessInsert = Database["public"]["Tables"]["guesses"]["Insert"]
 export type Profile = Database["public"]["Tables"]["profiles"]["Row"]
 export type ProfileUpdate = Database["public"]["Tables"]["profiles"]["Update"]
-
