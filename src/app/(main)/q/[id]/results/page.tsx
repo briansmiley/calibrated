@@ -16,18 +16,22 @@ export default async function ResultsPage({ params }: Props) {
   const { id } = await params
   const supabase = await createClient()
 
+  // Query by UUID prefix (short ID is first 7 chars of UUID)
   const { data: question, error } = await supabase
     .from('questions')
     .select('*')
-    .eq('slug', id)
+    .like('id', `${id}%`)
     .single()
 
   if (error || !question) {
     notFound()
   }
 
+  // Use the short ID for URLs
+  const shortId = question.id.slice(0, 7)
+
   if (!question.revealed) {
-    redirect(`/q/${question.slug}`)
+    redirect(`/q/${shortId}`)
   }
 
   const { data: guesses } = await supabase
@@ -114,7 +118,7 @@ export default async function ResultsPage({ params }: Props) {
           <div className="mt-6 flex gap-4">
             {isCreator && (
               <Button variant="outline" asChild>
-                <Link href={`/q/${question.slug}/admin`}>Back to Admin</Link>
+                <Link href={`/q/${shortId}/admin`}>Back to Admin</Link>
               </Button>
             )}
             <Button variant="outline" asChild>

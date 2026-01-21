@@ -106,7 +106,6 @@ export type Database = {
           min_value: number | null
           password: string | null
           revealed: boolean
-          slug: string
           title: string
           true_answer: number | null
           unit_type: Database["public"]["Enums"]["unit_type"]
@@ -123,7 +122,6 @@ export type Database = {
           min_value?: number | null
           password?: string | null
           revealed?: boolean
-          slug: string
           title: string
           true_answer?: number | null
           unit_type?: Database["public"]["Enums"]["unit_type"]
@@ -140,7 +138,6 @@ export type Database = {
           min_value?: number | null
           password?: string | null
           revealed?: boolean
-          slug?: string
           title?: string
           true_answer?: number | null
           unit_type?: Database["public"]["Enums"]["unit_type"]

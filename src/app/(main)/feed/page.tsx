@@ -65,7 +65,7 @@ export default async function FeedPage({ searchParams }: Props) {
         <>
           <div className="space-y-6">
             {questions.map((question) => (
-              <Link key={question.id} href={`/q/${question.slug}`} className="block">
+              <Link key={question.id} href={`/q/${question.id.slice(0, 7)}`} className="block">
                 <Card className="transition-colors hover:bg-muted/50">
                   <CardHeader>
                     <div className="flex items-start justify-between gap-4">

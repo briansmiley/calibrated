@@ -10,18 +10,22 @@ export default async function QuestionPage({ params }: Props) {
   const { id } = await params
   const supabase = await createClient()
 
+  // Query by UUID prefix (short ID is first 7 chars of UUID)
   const { data: question, error } = await supabase
     .from('questions')
     .select('*')
-    .eq('slug', id)
+    .like('id', `${id}%`)
     .single()
 
   if (error || !question) {
     notFound()
   }
 
+  // Use the short ID for URLs
+  const shortId = question.id.slice(0, 7)
+
   if (question.revealed) {
-    redirect(`/q/${question.slug}/results`)
+    redirect(`/q/${shortId}/results`)
   }
 
   const { data: { user } } = await supabase.auth.getUser()

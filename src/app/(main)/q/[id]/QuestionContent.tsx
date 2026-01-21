@@ -24,6 +24,7 @@ export function QuestionContent({ question, guesses: initialGuesses, userEmail, 
   const hasAnswer = question.true_answer !== null
   const guessesRevealed = question.guesses_revealed
   const isCreator = userId === question.creator_id
+  const shortId = question.id.slice(0, 7)
 
   const handleGuessSubmitted = (newGuess: { id: string; display_name: string | null; value: number; created_at: string; prior_visible_guesses: number | null }) => {
     setGuesses(prev => [...prev, newGuess as Guess])
@@ -37,7 +38,7 @@ export function QuestionContent({ question, guesses: initialGuesses, userEmail, 
             <CardTitle>{question.title}</CardTitle>
             {isCreator && (
               <Link
-                href={`/q/${question.slug}/admin`}
+                href={`/q/${shortId}/admin`}
                 className="text-sm text-primary hover:underline shrink-0"
               >
                 Manage

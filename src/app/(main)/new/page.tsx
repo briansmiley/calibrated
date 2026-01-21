@@ -10,16 +10,9 @@ import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { UnitType } from '@/types/database'
-import { generateSlug, isValidSlug } from '@/lib/slug'
-import { Loader2, Check, X } from 'lucide-react'
-
-type SlugStatus = 'idle' | 'checking' | 'available' | 'taken' | 'invalid'
 
 export default function NewQuestionPage() {
   const [title, setTitle] = useState('')
-  const [slug, setSlug] = useState('')
-  const [slugTouched, setSlugTouched] = useState(false)
-  const [slugStatus, setSlugStatus] = useState<SlugStatus>('idle')
   const [description, setDescription] = useState('')
   const [trueAnswer, setTrueAnswer] = useState('')
   const [unitType, setUnitType] = useState<UnitType>('none')
@@ -41,48 +34,10 @@ export default function NewQuestionPage() {
   const router = useRouter()
   const supabase = createClient()
 
-  const checkSlugAvailability = async (slugToCheck: string) => {
-    if (!slugToCheck || !isValidSlug(slugToCheck)) {
-      setSlugStatus(slugToCheck ? 'invalid' : 'idle')
-      return
-    }
-
-    setSlugStatus('checking')
-
-    const { data } = await supabase
-      .from('questions')
-      .select('id')
-      .eq('slug', slugToCheck)
-      .maybeSingle()
-
-    setSlugStatus(data ? 'taken' : 'available')
-  }
-
-  const handleTitleChange = (newTitle: string) => {
-    setTitle(newTitle)
-    if (!slugTouched) {
-      const newSlug = generateSlug(newTitle)
-      setSlug(newSlug)
-      setSlugStatus('idle')
-    }
-  }
-
-  const handleSlugChange = (newSlug: string) => {
-    setSlugTouched(true)
-    setSlug(newSlug.toLowerCase().replace(/[^a-z0-9-]/g, ''))
-    setSlugStatus('idle')
-  }
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setError(null)
-
-    if (!isValidSlug(slug)) {
-      setError('URL slug must be 3-50 characters, lowercase letters, numbers, and hyphens only')
-      setLoading(false)
-      return
-    }
 
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
@@ -95,7 +50,6 @@ export default function NewQuestionPage() {
       .from('questions')
       .insert({
         creator_id: user.id,
-        slug,
         title,
         description: description || null,
         true_answer: trueAnswer ? parseFloat(trueAnswer) : null,
@@ -110,16 +64,13 @@ export default function NewQuestionPage() {
       .single()
 
     if (insertError) {
-      if (insertError.code === '23505') {
-        setError('This URL is already taken. Please choose a different one.')
-      } else {
-        setError(insertError.message)
-      }
+      setError(insertError.message)
       setLoading(false)
       return
     }
 
-    router.push(`/q/${data.slug}/admin`)
+    // Use first 7 chars of UUID as short ID for URL
+    router.push(`/q/${data.id.slice(0, 7)}/admin`)
   }
 
   return (
@@ -145,51 +96,10 @@ export default function NewQuestionPage() {
                 id="title"
                 type="text"
                 value={title}
-                onChange={(e) => handleTitleChange(e.target.value)}
+                onChange={(e) => setTitle(e.target.value)}
                 required
                 placeholder="How many jellybeans are in this jar?"
               />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="slug">URL</Label>
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">/q/</span>
-                <Input
-                  id="slug"
-                  type="text"
-                  value={slug}
-                  onChange={(e) => handleSlugChange(e.target.value)}
-                  onBlur={() => checkSlugAvailability(slug)}
-                  required
-                  placeholder="my-question"
-                  className="flex-1"
-                />
-                {slugStatus === 'checking' && (
-                  <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                )}
-                {slugStatus === 'available' && (
-                  <div className="flex items-center gap-1 text-green-500">
-                    <Check className="h-4 w-4" />
-                    <span className="text-xs">Available</span>
-                  </div>
-                )}
-                {slugStatus === 'taken' && (
-                  <div className="flex items-center gap-1 text-destructive">
-                    <X className="h-4 w-4" />
-                    <span className="text-xs">Taken</span>
-                  </div>
-                )}
-                {slugStatus === 'invalid' && (
-                  <div className="flex items-center gap-1 text-destructive">
-                    <X className="h-4 w-4" />
-                    <span className="text-xs">Invalid</span>
-                  </div>
-                )}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                This will be the shareable link for your question.
-              </p>
             </div>
 
             <div className="space-y-2">

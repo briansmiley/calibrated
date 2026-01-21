@@ -44,8 +44,10 @@ export function QuestionCard({ question }: Props) {
     router.refresh()
   }
 
+  const shortId = question.id.slice(0, 7)
+
   return (
-    <Link href={`/q/${question.slug}/admin`} className="block">
+    <Link href={`/q/${shortId}/admin`} className="block">
       <Card className="transition-colors hover:bg-muted/50 cursor-pointer">
         <CardContent className="pt-6">
           <div className="flex items-start justify-between">

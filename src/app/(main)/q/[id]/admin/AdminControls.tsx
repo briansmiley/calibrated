@@ -8,14 +8,14 @@ import { Trash2 } from 'lucide-react'
 
 interface Props {
   questionId: string
-  slug: string
+  shortId: string
   guessesRevealed: boolean
   revealed: boolean
   guessCount: number
   hasAnswer: boolean
 }
 
-export function AdminControls({ questionId, slug, guessesRevealed, revealed, guessCount, hasAnswer }: Props) {
+export function AdminControls({ questionId, shortId, guessesRevealed, revealed, guessCount, hasAnswer }: Props) {
   const [loading, setLoading] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
@@ -63,7 +63,7 @@ export function AdminControls({ questionId, slug, guessesRevealed, revealed, gue
       return
     }
 
-    router.push(`/q/${slug}/results`)
+    router.push(`/q/${shortId}/results`)
   }
 
   const handleRevealAll = async () => {
@@ -85,7 +85,7 @@ export function AdminControls({ questionId, slug, guessesRevealed, revealed, gue
       return
     }
 
-    router.push(`/q/${slug}/results`)
+    router.push(`/q/${shortId}/results`)
   }
 
   const handleDelete = async () => {
@@ -114,7 +114,7 @@ export function AdminControls({ questionId, slug, guessesRevealed, revealed, gue
     return (
       <div className="space-y-6">
         <div>
-          <Button onClick={() => router.push(`/q/${slug}/results`)}>
+          <Button onClick={() => router.push(`/q/${shortId}/results`)}>
             View Results
           </Button>
         </div>

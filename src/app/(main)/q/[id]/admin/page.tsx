@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { notFound, redirect } from 'next/navigation'
 import { AdminControls } from './AdminControls'
-import { SlugEditor } from './SlugEditor'
+import { ShareLink } from './ShareLink'
 import { Badge } from '@/components/ui/badge'
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
 import { formatValue } from '@/lib/formatValue'
@@ -22,18 +22,22 @@ export default async function AdminPage({ params }: Props) {
     redirect(`/login?redirect=/q/${id}/admin`)
   }
 
+  // Query by UUID prefix (short ID is first 7 chars of UUID)
   const { data: question, error } = await supabase
     .from('questions')
     .select('*')
-    .eq('slug', id)
+    .like('id', `${id}%`)
     .single()
 
   if (error || !question) {
     notFound()
   }
 
+  // Use the short ID for URLs
+  const shortId = question.id.slice(0, 7)
+
   if (question.creator_id !== user.id) {
-    redirect(`/q/${question.slug}`)
+    redirect(`/q/${shortId}`)
   }
 
   const { data: guesses } = await supabase
@@ -52,7 +56,7 @@ export default async function AdminPage({ params }: Props) {
         <div className="flex items-start justify-between gap-4">
           <h1 className="text-2xl font-bold">{question.title}</h1>
           <Link
-            href={`/q/${question.slug}`}
+            href={`/q/${shortId}`}
             className="text-sm text-primary hover:underline shrink-0"
           >
             View Public
@@ -79,11 +83,7 @@ export default async function AdminPage({ params }: Props) {
       {/* Share Link */}
       <div>
         <h2 className="text-sm font-medium text-muted-foreground mb-2">Share Link</h2>
-        <SlugEditor
-          questionId={question.id}
-          currentSlug={question.slug}
-          baseUrl={baseUrl}
-        />
+        <ShareLink shortId={shortId} baseUrl={baseUrl} />
       </div>
 
       {/* Guesses */}
@@ -127,7 +127,7 @@ export default async function AdminPage({ params }: Props) {
       {/* Controls */}
       <AdminControls
         questionId={question.id}
-        slug={question.slug}
+        shortId={shortId}
         guessesRevealed={question.guesses_revealed}
         revealed={question.revealed}
         guessCount={guessCount}
