@@ -77,6 +77,45 @@ supabase start       # Start local Supabase (if using local instance)
 
 For OAuth testing locally with production Supabase, temporarily change Site URL in Supabase dashboard to `http://localhost:3000`.
 
+## Testing
+
+### E2E Tests (Playwright)
+The project uses Playwright for end-to-end testing. Tests are in the `/e2e` directory.
+
+```bash
+npm run test:e2e        # Run all e2e tests (headless)
+npm run test:e2e:ui     # Run tests with Playwright UI
+npm run test:e2e:headed # Run tests in headed browser mode
+npm run test:e2e:debug  # Debug tests step-by-step
+npm run test:report     # View HTML test report
+```
+
+**Test Setup Requirements:**
+1. Start local Supabase: `supabase start`
+2. Seed test data: `npm run db:seed` (if seed script exists)
+3. Ensure test users exist (alice@example.com, bob@example.com with password: password123)
+
+**Test Structure:**
+- `/e2e/fixtures/` - Test utilities, helpers, and fixtures
+- `/e2e/auth.spec.ts` - Authentication tests
+- `/e2e/questions.spec.ts` - Question creation and viewing
+- `/e2e/guesses.spec.ts` - Guess submission and validation
+- `/e2e/results.spec.ts` - Results page and number line
+- `/e2e/dashboard.spec.ts` - Dashboard functionality
+- `/e2e/feed.spec.ts` - Public feed and password protection
+
+**Running Specific Tests:**
+```bash
+npm run test:e2e -- e2e/auth.spec.ts        # Run only auth tests
+npm run test:e2e -- --grep "login"           # Run tests matching "login"
+```
+
+**Pre-PR Checklist:**
+Before opening a PR, ensure all relevant tests pass:
+1. Run the full test suite: `npm run test:e2e`
+2. If adding new features, add corresponding tests
+3. Review test report for any failures: `npm run test:report`
+
 ## File Structure Highlights
 - `/src/app/q/[id]/` - Question pages (public view, admin, results)
 - `/src/app/auth/callback/page.tsx` - OAuth callback (client-side for PKCE)
