@@ -7,26 +7,41 @@ import { User } from '@supabase/supabase-js'
 import { Button } from '@/components/ui/button'
 import { CalibratedLogo } from '@/components/CalibratedLogo'
 import { FaSignOutAlt } from 'react-icons/fa'
+import { Profile } from '@/types/database'
 
 export function Header() {
   const [user, setUser] = useState<User | null>(null)
+  const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
   const supabase = createClient()
 
   useEffect(() => {
-    const getUser = async () => {
+    const getUserAndProfile = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       setUser(user)
+
+      if (user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single()
+        setProfile(profile)
+      }
+
       setLoading(false)
     }
-    getUser()
+    getUserAndProfile()
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null)
+      if (!session?.user) {
+        setProfile(null)
+      }
     })
 
     return () => subscription.unsubscribe()
-  }, [supabase.auth])
+  }, [supabase])
 
   const handleSignOut = async () => {
     await supabase.auth.signOut()
@@ -61,6 +76,13 @@ export function Header() {
                 <Button asChild size="sm">
                   <Link href="/new">New Question</Link>
                 </Button>
+                <Link
+                  href="/profile"
+                  className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-medium text-sm hover:opacity-80 transition-opacity"
+                  title="Profile"
+                >
+                  {(profile?.display_name || user.email || 'U')[0].toUpperCase()}
+                </Link>
                 <button
                   onClick={handleSignOut}
                   className="text-muted-foreground hover:text-foreground"

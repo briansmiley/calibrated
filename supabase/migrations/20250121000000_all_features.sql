@@ -10,7 +10,7 @@ ALTER TABLE public.questions ADD COLUMN IF NOT EXISTS max_value numeric;
 -- ============================================
 -- Feature 3: Public feed + password protection
 -- ============================================
-ALTER TABLE public.questions ADD COLUMN IF NOT EXISTS is_public boolean DEFAULT false;
+ALTER TABLE public.questions ADD COLUMN IF NOT EXISTS is_public boolean NOT NULL DEFAULT false;
 ALTER TABLE public.questions ADD COLUMN IF NOT EXISTS password text;
 
 -- Index for efficient public feed queries
