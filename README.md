@@ -1,4 +1,5 @@
-# Calibrated
+<img width="354" height="89" alt="image" src="https://github.com/user-attachments/assets/6f6cd2d3-3b1d-4399-91de-82d7f8164f18" />
+
 
 <!-- TODO: Add logo screenshot here -->
 
