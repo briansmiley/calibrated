@@ -27,7 +27,7 @@ export function QuestionContent({ question, guesses, userEmail, userId }: Questi
         <CardHeader>
           <CardTitle>{question.title}</CardTitle>
           {question.description && (
-            <CardDescription>{question.description}</CardDescription>
+            <CardDescription className="text-base text-foreground/80">{question.description}</CardDescription>
           )}
           <p className="text-xs text-muted-foreground pt-2">
             Created <LocalTime date={question.created_at} />
@@ -38,7 +38,7 @@ export function QuestionContent({ question, guesses, userEmail, userId }: Questi
             <div className="flex items-center gap-1 text-sm text-muted-foreground">
               <span>Answer:</span>
               {prefix && <span>{prefix}</span>}
-              <span className="inline-block w-16 h-6 bg-muted rounded blur-[2px]" />
+              <span className="inline-block w-16 h-6 bg-muted-foreground/40 rounded blur-[2px]" />
               {suffix && <span>{suffix}</span>}
             </div>
           </CardContent>
@@ -103,7 +103,7 @@ export function QuestionContent({ question, guesses, userEmail, userId }: Questi
                   ) : (
                     <div className="flex items-center gap-1 text-sm text-muted-foreground">
                       {prefix && <span>{prefix}</span>}
-                      <span className="inline-block w-12 h-5 bg-muted rounded blur-[2px]" />
+                      <span className="inline-block w-12 h-5 bg-muted-foreground/40 rounded blur-[2px]" />
                       {suffix && <span>{suffix}</span>}
                     </div>
                   )}
