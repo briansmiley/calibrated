@@ -27,6 +27,8 @@ export default function NewQuestionPage() {
   const [customUnit, setCustomUnit] = useState('')
   const [isPublic, setIsPublic] = useState(false)
   const [password, setPassword] = useState('')
+  const [minValue, setMinValue] = useState('')
+  const [maxValue, setMaxValue] = useState('')
 
   const handleUnitTypeChange = (value: UnitType) => {
     setUnitType(value)
@@ -101,6 +103,8 @@ export default function NewQuestionPage() {
         custom_unit: unitType === 'currency' ? currencySymbol : unitType === 'custom' ? customUnit : null,
         is_public: isPublic,
         password: password || null,
+        min_value: minValue ? parseFloat(minValue) : null,
+        max_value: maxValue ? parseFloat(maxValue) : null,
       })
       .select()
       .single()
@@ -211,6 +215,36 @@ export default function NewQuestionPage() {
               />
               <p className="text-xs text-muted-foreground">
                 If provided, this will be highlighted when you reveal the results.
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Allowed Range (optional)</Label>
+              <div className="flex items-center gap-3">
+                <div className="flex-1">
+                  <Input
+                    id="minValue"
+                    type="number"
+                    step="any"
+                    value={minValue}
+                    onChange={(e) => setMinValue(e.target.value)}
+                    placeholder="Min"
+                  />
+                </div>
+                <span className="text-muted-foreground">to</span>
+                <div className="flex-1">
+                  <Input
+                    id="maxValue"
+                    type="number"
+                    step="any"
+                    value={maxValue}
+                    onChange={(e) => setMaxValue(e.target.value)}
+                    placeholder="Max"
+                  />
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Restrict guesses to a specific range. Leave blank for no limits.
               </p>
             </div>
 

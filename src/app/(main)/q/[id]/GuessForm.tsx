@@ -12,9 +12,13 @@ interface Props {
   userId: string | null
   guessesRevealed: boolean
   currentGuessCount: number
+  minValue: number | null
+  maxValue: number | null
+  unitPrefix: string | null
+  unitSuffix: string | null
 }
 
-export function GuessForm({ questionId, userEmail, userId, guessesRevealed, currentGuessCount }: Props) {
+export function GuessForm({ questionId, userEmail, userId, guessesRevealed, currentGuessCount, minValue, maxValue, unitPrefix, unitSuffix }: Props) {
   const [value, setValue] = useState('')
   const [displayName, setDisplayName] = useState('')
   const [loading, setLoading] = useState(false)
@@ -30,6 +34,18 @@ export function GuessForm({ questionId, userEmail, userId, guessesRevealed, curr
     const numValue = parseFloat(value)
     if (isNaN(numValue)) {
       setError('Please enter a valid number')
+      setLoading(false)
+      return
+    }
+
+    const outOfRange = (minValue !== null && numValue < minValue) || (maxValue !== null && numValue > maxValue)
+    if (outOfRange) {
+      const rangeStr = minValue !== null && maxValue !== null
+        ? `${minValue} – ${maxValue}`
+        : minValue !== null
+        ? `${minValue} or more`
+        : `${maxValue} or less`
+      setError(`Guess must be in range ${rangeStr}`)
       setLoading(false)
       return
     }
@@ -123,15 +139,31 @@ export function GuessForm({ questionId, userEmail, userId, guessesRevealed, curr
 
       <div className="space-y-2">
         <Label htmlFor="value">Your Guess *</Label>
-        <Input
-          id="value"
-          type="number"
-          step="any"
-          value={value}
-          onChange={(e) => setValue(e.target.value)}
-          required
-          placeholder="Enter a number"
-        />
+        <div className="flex items-center gap-2">
+          {unitPrefix && <span className="text-muted-foreground">{unitPrefix}</span>}
+          <Input
+            id="value"
+            type="number"
+            step="any"
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            required
+            placeholder="Enter a number"
+            min={minValue ?? undefined}
+            max={maxValue ?? undefined}
+            className="w-48"
+          />
+          {unitSuffix && <span className="text-muted-foreground">{unitSuffix}</span>}
+          {(minValue !== null || maxValue !== null) && (
+            <span className="text-xs text-muted-foreground">
+              Range: {minValue !== null && maxValue !== null
+                ? `${minValue} – ${maxValue}`
+                : minValue !== null
+                ? `${minValue}+`
+                : `≤${maxValue}`}
+            </span>
+          )}
+        </div>
       </div>
 
       <Button type="submit" disabled={loading || !value} className="w-full">
