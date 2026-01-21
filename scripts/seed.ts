@@ -1,5 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { execSync } from 'child_process'
+import { writeFileSync } from 'fs'
+import { join } from 'path'
 
 // Get local Supabase credentials from `supabase status`
 function getLocalSupabaseKey(): string {
@@ -78,6 +80,9 @@ async function clearExistingData() {
   console.log('  Cleared existing data')
 }
 
+// Map of local keys to question IDs (populated during seeding)
+const questionIdMap: Record<string, string> = {}
+
 async function seedQuestions(users: User[]) {
   console.log('Creating questions...')
 
@@ -87,119 +92,137 @@ async function seedQuestions(users: User[]) {
     return
   }
 
+  // Questions with local keys for mapping to guesses (keys not stored in DB)
   const questions = [
     // Open question, no guesses yet
     {
-      creator_id: alice.id,
-      slug: 'jellybeans-jar',
-      title: 'How many jellybeans are in this jar?',
-      description: 'Standard mason jar filled with assorted jellybeans. Guess the exact count!',
-      true_answer: 347,
-      unit_type: 'none' as const,
-      is_public: true,
-      guesses_revealed: false,
-      revealed: false,
+      key: 'jellybeans-jar',
+      data: {
+        creator_id: alice.id,
+        title: 'How many jellybeans are in this jar?',
+        description: 'Standard mason jar filled with assorted jellybeans. Guess the exact count!',
+        true_answer: 347,
+        unit_type: 'none' as const,
+        is_public: true,
+        guesses_revealed: false,
+        revealed: false,
+      },
     },
     // Open question with guesses, guesses hidden
     {
-      creator_id: alice.id,
-      slug: 'earth-moon-distance',
-      title: 'What is the distance from Earth to the Moon in miles?',
-      description: 'Average distance, not at perigee or apogee.',
-      true_answer: 238900,
-      unit_type: 'custom' as const,
-      custom_unit: 'miles',
-      is_public: true,
-      guesses_revealed: false,
-      revealed: false,
+      key: 'earth-moon-distance',
+      data: {
+        creator_id: alice.id,
+        title: 'What is the distance from Earth to the Moon in miles?',
+        description: 'Average distance, not at perigee or apogee.',
+        true_answer: 238900,
+        unit_type: 'custom' as const,
+        custom_unit: 'miles',
+        is_public: true,
+        guesses_revealed: false,
+        revealed: false,
+      },
     },
     // Open question with guesses revealed (but answer not revealed)
     {
-      creator_id: bob.id,
-      slug: 'movie-budget',
-      title: 'What was the production budget of Avatar (2009)?',
-      description: 'Just the production budget, not marketing.',
-      true_answer: 237000000,
-      unit_type: 'currency' as const,
-      custom_unit: '$',
-      is_public: true,
-      guesses_revealed: true,
-      revealed: false,
+      key: 'movie-budget',
+      data: {
+        creator_id: bob.id,
+        title: 'What was the production budget of Avatar (2009)?',
+        description: 'Just the production budget, not marketing.',
+        true_answer: 237000000,
+        unit_type: 'currency' as const,
+        custom_unit: '$',
+        is_public: true,
+        guesses_revealed: true,
+        revealed: false,
+      },
     },
     // Fully revealed question
     {
-      creator_id: bob.id,
-      slug: 'spotify-songs',
-      title: 'How many songs are on Spotify (as of 2024)?',
-      description: 'Total number of tracks available on the platform.',
-      true_answer: 100000000,
-      unit_type: 'none' as const,
-      is_public: true,
-      guesses_revealed: true,
-      revealed: true,
+      key: 'spotify-songs',
+      data: {
+        creator_id: bob.id,
+        title: 'How many songs are on Spotify (as of 2024)?',
+        description: 'Total number of tracks available on the platform.',
+        true_answer: 100000000,
+        unit_type: 'none' as const,
+        is_public: true,
+        guesses_revealed: true,
+        revealed: true,
+      },
     },
     // Question with min/max bounds
     {
-      creator_id: charlie?.id || alice.id,
-      slug: 'percentage-guess',
-      title: 'What percentage of the ocean has been explored?',
-      description: 'Estimated percentage of the ocean floor that has been mapped in detail.',
-      true_answer: 5,
-      unit_type: 'percentage' as const,
-      min_value: 0,
-      max_value: 100,
-      is_public: true,
-      guesses_revealed: false,
-      revealed: false,
+      key: 'percentage-guess',
+      data: {
+        creator_id: charlie?.id || alice.id,
+        title: 'What percentage of the ocean has been explored?',
+        description: 'Estimated percentage of the ocean floor that has been mapped in detail.',
+        true_answer: 5,
+        unit_type: 'percentage' as const,
+        min_value: 0,
+        max_value: 100,
+        is_public: true,
+        guesses_revealed: false,
+        revealed: false,
+      },
     },
     // Password protected question
     {
-      creator_id: diana?.id || alice.id,
-      slug: 'secret-question',
-      title: 'How many lines of code in this codebase?',
-      description: 'Total lines across all TypeScript/JavaScript files.',
-      true_answer: 2500,
-      unit_type: 'none' as const,
-      is_public: false,
-      password: 'secret',
-      guesses_revealed: false,
-      revealed: false,
+      key: 'secret-question',
+      data: {
+        creator_id: diana?.id || alice.id,
+        title: 'How many lines of code in this codebase?',
+        description: 'Total lines across all TypeScript/JavaScript files.',
+        true_answer: 2500,
+        unit_type: 'none' as const,
+        is_public: false,
+        password: 'secret',
+        guesses_revealed: false,
+        revealed: false,
+      },
     },
     // Private question (no password)
     {
-      creator_id: eve?.id || alice.id,
-      slug: 'private-poll',
-      title: 'How many hours did you sleep last night?',
-      description: 'For our friend group sleep study.',
-      true_answer: null,
-      unit_type: 'custom' as const,
-      custom_unit: 'hours',
-      is_public: false,
-      guesses_revealed: true,
-      revealed: false,
+      key: 'private-poll',
+      data: {
+        creator_id: eve?.id || alice.id,
+        title: 'How many hours did you sleep last night?',
+        description: 'For our friend group sleep study.',
+        true_answer: null,
+        unit_type: 'custom' as const,
+        custom_unit: 'hours',
+        is_public: false,
+        guesses_revealed: true,
+        revealed: false,
+      },
     },
     // Question with only min bound
     {
-      creator_id: alice.id,
-      slug: 'positive-number',
-      title: 'How many stars are in the Milky Way (in billions)?',
-      description: 'Estimate in billions of stars.',
-      true_answer: 200,
-      unit_type: 'custom' as const,
-      custom_unit: 'billion',
-      min_value: 1,
-      is_public: true,
-      guesses_revealed: false,
-      revealed: false,
+      key: 'positive-number',
+      data: {
+        creator_id: alice.id,
+        title: 'How many stars are in the Milky Way (in billions)?',
+        description: 'Estimate in billions of stars.',
+        true_answer: 200,
+        unit_type: 'custom' as const,
+        custom_unit: 'billion',
+        min_value: 1,
+        is_public: true,
+        guesses_revealed: false,
+        revealed: false,
+      },
     },
   ]
 
   for (const q of questions) {
-    const { data, error } = await supabase.from('questions').insert(q).select().single()
+    const { data, error } = await supabase.from('questions').insert(q.data).select().single()
     if (error) {
-      console.error(`  Error creating "${q.slug}":`, error.message)
+      console.error(`  Error creating "${q.key}":`, error.message)
     } else {
-      console.log(`  Created question: ${q.slug}`)
+      console.log(`  Created question: ${q.key} (id: ${data.id.slice(0, 7)})`)
+      questionIdMap[q.key] = data.id
     }
   }
 }
@@ -208,12 +231,6 @@ async function seedGuesses(users: User[]) {
   console.log('Creating guesses...')
 
   const [alice, bob, charlie, diana, eve] = users
-
-  // Get all questions
-  const { data: questions } = await supabase.from('questions').select('*')
-  if (!questions) return
-
-  const questionMap = Object.fromEntries(questions.map(q => [q.slug, q]))
 
   const guesses = [
     // Earth-moon distance guesses (hidden)
@@ -256,14 +273,14 @@ async function seedGuesses(users: User[]) {
   ]
 
   for (const g of guesses) {
-    const question = questionMap[g.question]
-    if (!question) {
+    const questionId = questionIdMap[g.question]
+    if (!questionId) {
       console.error(`  Question not found: ${g.question}`)
       continue
     }
 
     const guess = {
-      question_id: question.id,
+      question_id: questionId,
       user_id: g.user?.id || null,
       display_name: g.displayName || g.user?.name || 'Anonymous',
       value: g.value,
@@ -293,6 +310,16 @@ async function main() {
 
   await seedQuestions(users)
   await seedGuesses(users)
+
+  // Write question ID mappings for e2e tests
+  const seedDataPath = join(__dirname, '..', 'e2e', 'fixtures', 'seed-data.json')
+  const seedData = {
+    questions: Object.fromEntries(
+      Object.entries(questionIdMap).map(([key, id]) => [key, id.slice(0, 7)])
+    ),
+  }
+  writeFileSync(seedDataPath, JSON.stringify(seedData, null, 2))
+  console.log(`\nWrote seed data to: ${seedDataPath}`)
 
   console.log('\n✅ Seeding complete!\n')
   console.log('Test accounts (password: password123):')

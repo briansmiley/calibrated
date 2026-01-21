@@ -130,6 +130,25 @@ export type Database = {
     }
     Functions: {
       check_email_exists: { Args: { email_to_check: string }; Returns: boolean }
+      get_question_by_prefix: {
+        Args: { prefix: string }
+        Returns: {
+          id: string
+          creator_id: string
+          title: string
+          description: string | null
+          true_answer: number | null
+          unit_type: Database["public"]["Enums"]["unit_type"] | null
+          custom_unit: string | null
+          min_value: number | null
+          max_value: number | null
+          is_public: boolean | null
+          password: string | null
+          guesses_revealed: boolean | null
+          revealed: boolean | null
+          created_at: string | null
+        }[]
+      }
     }
     Enums: {
       unit_type: "none" | "currency" | "percentage" | "custom"

@@ -61,21 +61,27 @@ test.describe('User Profile', () => {
     await expect(page.getByText(/already taken/i)).toBeVisible();
   });
 
-  test('header shows user avatar linking to profile', async ({ page }) => {
+  test('header shows user avatar with dropdown menu', async ({ page }) => {
     await loginUser(page, TEST_USERS.alice.email, TEST_USERS.alice.password);
 
-    // The avatar should be a circular link to /profile
-    const avatar = page.locator('a[href="/profile"]');
-    await expect(avatar).toBeVisible();
-    // Avatar shows first letter of display name or email username
-    await expect(avatar).toHaveClass(/rounded-full/);
+    // The avatar should be a circular button that opens a dropdown
+    const avatarButton = page.locator('header button.rounded-full');
+    await expect(avatarButton).toBeVisible();
+
+    // Click to open dropdown and verify Profile link is there
+    await avatarButton.click();
+    await expect(page.getByRole('menuitem', { name: 'Profile' })).toBeVisible();
   });
 
-  test('clicking avatar navigates to profile', async ({ page }) => {
+  test('clicking avatar menu navigates to profile', async ({ page }) => {
     await loginUser(page, TEST_USERS.alice.email, TEST_USERS.alice.password);
 
-    const avatar = page.locator('a[href="/profile"]');
-    await avatar.click();
+    // Open dropdown menu
+    const avatarButton = page.locator('header button.rounded-full');
+    await avatarButton.click();
+
+    // Click Profile in the menu
+    await page.getByRole('menuitem', { name: 'Profile' }).click();
 
     await expect(page).toHaveURL('/profile');
   });

@@ -16,12 +16,11 @@ export default async function ResultsPage({ params }: Props) {
   const { id } = await params
   const supabase = await createClient()
 
-  // Query by UUID prefix (short ID is first 7 chars of UUID)
-  const { data: question, error } = await supabase
-    .from('questions')
-    .select('*')
-    .like('id', `${id}%`)
-    .single()
+  // Query by UUID prefix using RPC function (LIKE doesn't work on UUID type)
+  const { data: questions, error } = await supabase
+    .rpc('get_question_by_prefix', { prefix: id })
+
+  const question = questions?.[0]
 
   if (error || !question) {
     notFound()

@@ -94,9 +94,9 @@ test.describe('Question Admin', () => {
     // Alice created jellybeans-jar
     await page.goto(`/q/${SEEDED_QUESTIONS.jellybeans}/admin`);
 
-    // Admin page shows "Share Link" section and "Edit URL" link
+    // Admin page shows "Share Link" section and question title
     await expect(page.getByText('Share Link')).toBeVisible();
-    await expect(page.getByText('Edit URL')).toBeVisible();
+    await expect(page.getByText('How many jellybeans')).toBeVisible();
   });
 
   test('non-creator cannot access admin page', async ({ page }) => {

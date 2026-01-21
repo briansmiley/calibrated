@@ -150,9 +150,10 @@ test.describe('Live Guess Updates', () => {
 
 test.describe('Guess Display', () => {
   test('question shows correct guess count', async ({ page }) => {
-    await page.goto(`/q/${SEEDED_QUESTIONS.movieBudget}`);
+    // Use earthMoon which has 4 guesses and isn't modified by other tests
+    await page.goto(`/q/${SEEDED_QUESTIONS.earthMoon}`);
 
-    // Movie budget has 4 guesses from seed
+    // Earth-moon has 4 guesses from seed
     await expect(page.getByText(/Guesses \(4\)/)).toBeVisible();
   });
 
