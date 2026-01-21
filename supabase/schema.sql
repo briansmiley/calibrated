@@ -82,9 +82,54 @@ CREATE POLICY "Anyone can submit guesses"
     )
   );
 
+-- Profiles table for user display names
+CREATE TABLE public.profiles (
+  id uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  display_name text UNIQUE,
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now()
+);
+
+-- Enable Row Level Security
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+
+-- Anyone can view profiles
+CREATE POLICY "Profiles are viewable by everyone"
+  ON public.profiles FOR SELECT
+  USING (true);
+
+-- Users can insert their own profile
+CREATE POLICY "Users can create their own profile"
+  ON public.profiles FOR INSERT
+  TO authenticated
+  WITH CHECK (auth.uid() = id);
+
+-- Users can update their own profile
+CREATE POLICY "Users can update their own profile"
+  ON public.profiles FOR UPDATE
+  TO authenticated
+  USING (auth.uid() = id)
+  WITH CHECK (auth.uid() = id);
+
+-- Function to automatically create profile on user signup
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS trigger AS $$
+BEGIN
+  INSERT INTO public.profiles (id)
+  VALUES (NEW.id);
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Trigger to create profile when user signs up
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
 -- Indexes for performance
 CREATE INDEX idx_questions_creator_id ON public.questions(creator_id);
 CREATE INDEX idx_questions_slug ON public.questions(slug);
 CREATE INDEX idx_questions_is_public ON public.questions(is_public) WHERE is_public = true;
 CREATE INDEX idx_guesses_question_id ON public.guesses(question_id);
 CREATE INDEX idx_guesses_user_id ON public.guesses(user_id);
+CREATE INDEX idx_profiles_display_name ON public.profiles(display_name);

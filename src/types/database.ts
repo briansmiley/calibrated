@@ -115,6 +115,34 @@ export interface Database {
           }
         ]
       }
+      profiles: {
+        Row: {
+          id: string
+          display_name: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id: string
+          display_name?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          display_name?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_id_fkey"
+            columns: ["id"]
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -135,3 +163,5 @@ export type Question = Database['public']['Tables']['questions']['Row']
 export type QuestionInsert = Database['public']['Tables']['questions']['Insert']
 export type Guess = Database['public']['Tables']['guesses']['Row']
 export type GuessInsert = Database['public']['Tables']['guesses']['Insert']
+export type Profile = Database['public']['Tables']['profiles']['Row']
+export type ProfileUpdate = Database['public']['Tables']['profiles']['Update']
