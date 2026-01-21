@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label'
 
 interface NewGuess {
   id: string
-  display_name: string
+  display_name: string | null
   value: number
   created_at: string
   prior_visible_guesses: number | null

@@ -23,7 +23,7 @@ export function QuestionContent({ question, guesses: initialGuesses, userEmail, 
   const hasAnswer = question.true_answer !== null
   const guessesRevealed = question.guesses_revealed
 
-  const handleGuessSubmitted = (newGuess: { id: string; display_name: string; value: number; created_at: string; prior_visible_guesses: number | null }) => {
+  const handleGuessSubmitted = (newGuess: { id: string; display_name: string | null; value: number; created_at: string; prior_visible_guesses: number | null }) => {
     setGuesses(prev => [...prev, newGuess as Guess])
   }
 
