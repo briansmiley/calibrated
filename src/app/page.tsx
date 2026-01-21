@@ -28,29 +28,29 @@ export default async function Home() {
 
           {/* Guess points */}
           <div
-            className="absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-muted-foreground/50"
+            className="absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-zinc-500"
             style={{ left: '15%' }}
           />
           <div
-            className="absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-muted-foreground/50"
+            className="absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-zinc-500"
             style={{ left: '25%' }}
           />
           <div
-            className="absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-muted-foreground/50"
+            className="absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-zinc-500"
             style={{ left: '45%' }}
           />
           <div
-            className="absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-muted-foreground/50"
+            className="absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-zinc-500"
             style={{ left: '72%' }}
           />
           <div
-            className="absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-muted-foreground/50"
+            className="absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-zinc-500"
             style={{ left: '85%' }}
           />
 
-          {/* The "true answer" green point */}
+          {/* The "true answer" green diamond */}
           <div
-            className="absolute top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-green-500 shadow-lg shadow-green-500/30"
+            className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-3 h-3 bg-green-500 shadow-lg shadow-green-500/30 ring-2 ring-green-400/50 rotate-45"
             style={{ left: '60%' }}
           />
         </div>
