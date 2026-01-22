@@ -132,7 +132,7 @@ export default function CreateSimplePage() {
         )}
 
         {/* Range and Value */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 pt-2">
+        <div className="flex flex-col sm:flex-row items-end gap-4 pt-2">
           <div className="space-y-1">
             <label className="text-xs text-muted-foreground">Guessable range</label>
             <div className="flex items-center gap-2">
@@ -161,7 +161,7 @@ export default function CreateSimplePage() {
               placeholder="Answer"
               value={trueAnswer}
               onChange={(e) => setTrueAnswer(e.target.value)}
-              className="w-28 text-center"
+              className="w-24 text-center"
             />
           </div>
         </div>

@@ -40,7 +40,12 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
           filter: `question_id=eq.${question.id}`,
         },
         (payload) => {
-          setGuesses((prev) => [...prev, payload.new as SimpleGuess])
+          const newGuess = payload.new as SimpleGuess
+          // Avoid duplicates (in case we added optimistically)
+          setGuesses((prev) => {
+            if (prev.some(g => g.id === newGuess.id)) return prev
+            return [...prev, newGuess]
+          })
         }
       )
       .on(
@@ -100,14 +105,18 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
     // Calculate value from click position (don't depend on hover state)
     const value = getValueFromPosition(e.clientX)
 
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('simple_guesses')
       .insert({
         question_id: question.id,
         value: value,
       })
+      .select()
+      .single()
 
-    if (!error) {
+    if (!error && data) {
+      // Optimistically add the guess to local state
+      setGuesses((prev) => [...prev, data])
       setJustGuessed(true)
       setHoverPosition(null)
       setHoverValue(null)

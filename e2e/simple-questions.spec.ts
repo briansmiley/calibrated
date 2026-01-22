@@ -134,8 +134,8 @@ test.describe('Simple Question Guessing', () => {
 
     // Should show "Guess recorded!"
     await expect(page.getByText('Guess recorded!')).toBeVisible();
-    // Guess count should increment
-    await expect(page.getByText('1')).toBeVisible();
+    // Guess count should increment (shows "1 guess" now)
+    await expect(page.locator('text=1guess')).toBeVisible();
   });
 
   test('can guess again after first guess', async ({ page }) => {
