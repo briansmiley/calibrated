@@ -124,6 +124,71 @@ export type Database = {
         }
         Relationships: []
       }
+      simple_guesses: {
+        Row: {
+          id: string
+          question_id: string
+          value: number
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          question_id: string
+          value: number
+          created_at?: string | null
+        }
+        Update: {
+          id?: string
+          question_id?: string
+          value?: number
+          created_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "simple_guesses_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "simple_questions"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      simple_questions: {
+        Row: {
+          id: string
+          title: string
+          description: string | null
+          min_value: number
+          max_value: number
+          true_answer: number
+          reveal_pin: string | null
+          revealed: boolean
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          title: string
+          description?: string | null
+          min_value: number
+          max_value: number
+          true_answer: number
+          reveal_pin?: string | null
+          revealed?: boolean
+          created_at?: string | null
+        }
+        Update: {
+          id?: string
+          title?: string
+          description?: string | null
+          min_value?: number
+          max_value?: number
+          true_answer?: number
+          reveal_pin?: string | null
+          revealed?: boolean
+          created_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -146,6 +211,20 @@ export type Database = {
           password: string | null
           guesses_revealed: boolean | null
           revealed: boolean | null
+          created_at: string | null
+        }[]
+      }
+      get_simple_question_by_prefix: {
+        Args: { prefix: string }
+        Returns: {
+          id: string
+          title: string
+          description: string | null
+          min_value: number
+          max_value: number
+          true_answer: number
+          reveal_pin: string | null
+          revealed: boolean
           created_at: string | null
         }[]
       }
@@ -292,3 +371,7 @@ export type Guess = Database["public"]["Tables"]["guesses"]["Row"]
 export type GuessInsert = Database["public"]["Tables"]["guesses"]["Insert"]
 export type Profile = Database["public"]["Tables"]["profiles"]["Row"]
 export type ProfileUpdate = Database["public"]["Tables"]["profiles"]["Update"]
+export type SimpleQuestion = Database["public"]["Tables"]["simple_questions"]["Row"]
+export type SimpleQuestionInsert = Database["public"]["Tables"]["simple_questions"]["Insert"]
+export type SimpleGuess = Database["public"]["Tables"]["simple_guesses"]["Row"]
+export type SimpleGuessInsert = Database["public"]["Tables"]["simple_guesses"]["Insert"]

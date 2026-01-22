@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { CalibratedLogo } from '@/components/CalibratedLogo'
+import { FaBolt } from 'react-icons/fa'
 
 export default async function Home() {
   const supabase = await createClient()
@@ -57,8 +58,16 @@ export default async function Home() {
       </div>
 
       <Link
+        href="/create/simple"
+        className="mt-16 flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+      >
+        <FaBolt className="h-4 w-4" />
+        <span>Quick Question</span>
+      </Link>
+
+      <Link
         href="/login"
-        className="mt-16 text-sm text-muted-foreground/50 hover:text-muted-foreground transition-colors"
+        className="mt-4 text-sm text-muted-foreground/50 hover:text-muted-foreground transition-colors"
       >
         Sign In / Up
       </Link>
