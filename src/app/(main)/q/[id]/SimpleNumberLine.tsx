@@ -32,6 +32,7 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
   const [showNameInput, setShowNameInput] = useState(false)
   const [nameInput, setNameInput] = useState('')
   const [hoveredGuessId, setHoveredGuessId] = useState<string | null>(null)
+  const [answerHovered, setAnswerHovered] = useState(false)
 
   const hasPin = question.reveal_pin !== null
 
@@ -257,7 +258,7 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
               return (
                 <div
                   key={guess.id}
-                  className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2"
+                  className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 ${isHovered ? 'z-20' : ''}`}
                   style={{ left: `${getPositionFromValue(guess.value)}%` }}
                   onMouseEnter={() => setHoveredGuessId(guess.id)}
                   onMouseLeave={() => setHoveredGuessId(null)}
@@ -265,7 +266,7 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
                   {/* Name label above (with arrow only for own guess) */}
                   {(isMyGuess || isHovered || isClosest) && (
                     <div className="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 flex flex-col items-center">
-                      <span className={`text-lg whitespace-nowrap ${isClosest ? 'text-white font-medium' : 'text-muted-foreground'}`}>
+                      <span className={`text-lg whitespace-nowrap ${isClosest ? 'text-white font-medium' : 'text-muted-foreground'} ${isHovered ? 'bg-zinc-900 px-2 rounded' : ''}`}>
                         {guess.name || <BsIncognito className="h-5 w-5" />}
                       </span>
                       {isMyGuess && (
@@ -289,7 +290,7 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
                     />
                   )}
                   {(showDetails || isClosest) && (
-                    <div className={`absolute top-full mt-1 left-1/2 -translate-x-1/2 text-lg whitespace-nowrap ${isClosest ? 'text-white font-medium' : 'text-muted-foreground'}`}>
+                    <div className={`absolute top-full mt-1 left-1/2 -translate-x-1/2 text-lg whitespace-nowrap ${isClosest ? 'text-white font-medium' : 'text-muted-foreground'} ${isHovered ? 'bg-zinc-900 px-2 rounded' : ''}`}>
                       {formatValue(guess.value)}
                     </div>
                   )}
@@ -301,11 +302,17 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
           {/* True answer (only after user guesses, if revealed) */}
           {revealed && justGuessed && (
             <div
-              className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 z-10"
+              className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 ${answerHovered ? 'z-30' : 'z-10'}`}
               style={{ left: `${getPositionFromValue(question.true_answer)}%` }}
+              onMouseEnter={() => setAnswerHovered(true)}
+              onMouseLeave={() => setAnswerHovered(false)}
             >
+              {/* Checkmark label above */}
+              <div className="absolute bottom-full mb-1 left-1/2 -translate-x-1/2">
+                <FaCheck className={`h-5 w-5 text-green-500 ${answerHovered ? 'bg-zinc-900 rounded p-0.5 box-content' : ''}`} />
+              </div>
               <div className="w-4 h-4 bg-green-500 rotate-45 shadow-lg shadow-green-500/30 ring-2 ring-green-400/50" />
-              <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 text-sm font-bold text-green-500 whitespace-nowrap">
+              <div className={`absolute top-full mt-2 left-1/2 -translate-x-1/2 text-sm font-bold text-green-500 whitespace-nowrap ${answerHovered ? 'bg-zinc-900 px-2 rounded' : ''}`}>
                 {formatValue(question.true_answer)}
               </div>
             </div>
@@ -431,22 +438,49 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
         )}
 
         {revealed && justGuessed && (() => {
-          const closestGuess = guesses.length > 0
-            ? guesses.reduce((closest, guess) =>
-                Math.abs(guess.value - question.true_answer) < Math.abs(closest.value - question.true_answer)
-                  ? guess
-                  : closest
-              )
-            : null
+          const sortedGuesses = [...guesses].sort((a, b) =>
+            Math.abs(a.value - question.true_answer) - Math.abs(b.value - question.true_answer)
+          )
+          const closestGuess = sortedGuesses[0] || null
           return (
-            <div className="space-y-1">
-              <p className="text-green-500 font-medium">
-                Answer: {formatWithCommas(question.true_answer)}
-              </p>
-              {closestGuess && (
-                <p className="text-white font-medium">
-                  Closest: {closestGuess.name || 'Anonymous'} ({formatWithCommas(closestGuess.value)})
+            <div className="space-y-4">
+              <div className="space-y-1">
+                <p className="text-green-500 font-medium">
+                  Answer: {formatWithCommas(question.true_answer)}
                 </p>
+                {closestGuess && (
+                  <p className="text-white font-medium">
+                    Closest: {closestGuess.name || 'Anonymous'} ({formatWithCommas(closestGuess.value)})
+                  </p>
+                )}
+              </div>
+
+              {/* Guesses table */}
+              {sortedGuesses.length > 0 && (
+                <table className="w-full max-w-xs mx-auto text-sm">
+                  <tbody>
+                    {/* Answer row */}
+                    <tr className="text-green-500 font-bold">
+                      <td className="py-1.5 text-left">Answer</td>
+                      <td className="py-1.5 text-right tabular-nums">
+                        {formatWithCommas(question.true_answer)}
+                      </td>
+                    </tr>
+                    {sortedGuesses.map((guess, i) => {
+                      const isClosest = i === 0
+                      return (
+                        <tr key={guess.id} className="border-t border-muted-foreground/20">
+                          <td className={`py-1.5 text-left ${isClosest ? 'text-white font-bold' : 'text-muted-foreground'}`}>
+                            {guess.name || 'Anonymous'}
+                          </td>
+                          <td className={`py-1.5 text-right tabular-nums ${isClosest ? 'text-white font-bold' : 'text-muted-foreground'}`}>
+                            {isClosest && '*'}{formatWithCommas(guess.value)}
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
               )}
             </div>
           )
