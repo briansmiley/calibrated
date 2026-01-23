@@ -18,7 +18,6 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
 
   const [guesses, setGuesses] = useState<SimpleGuess[]>(initialGuesses)
   const [revealed, setRevealed] = useState(question.revealed)
-  const [hoverPosition, setHoverPosition] = useState<number | null>(null)
   const [hoverValue, setHoverValue] = useState<number | null>(null)
   const [justGuessed, setJustGuessed] = useState(false)
   const [showPinInput, setShowPinInput] = useState(false)
@@ -87,15 +86,14 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
     return ((value - question.min_value) / (question.max_value - question.min_value)) * 100
   }
 
+
   const handleMouseMove = (e: React.MouseEvent) => {
     if (revealed || justGuessed) return
     const value = getValueFromPosition(e.clientX)
     setHoverValue(value)
-    setHoverPosition(getPositionFromValue(value))
   }
 
   const handleMouseLeave = () => {
-    setHoverPosition(null)
     setHoverValue(null)
   }
 
@@ -118,7 +116,6 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
       // Optimistically add the guess to local state
       setGuesses((prev) => [...prev, data])
       setJustGuessed(true)
-      setHoverPosition(null)
       setHoverValue(null)
     }
   }
@@ -176,13 +173,7 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
 
       {/* Number line container */}
       <div className="py-12">
-        <div
-          ref={lineRef}
-          className={`relative h-24 ${!revealed && !justGuessed ? 'cursor-crosshair' : ''}`}
-          onMouseMove={handleMouseMove}
-          onMouseLeave={handleMouseLeave}
-          onClick={handleClick}
-        >
+        <div className="relative h-24">
           {/* The line */}
           <div className="absolute top-1/2 left-0 right-0 h-1 bg-muted-foreground/30 -translate-y-1/2" />
 
@@ -190,11 +181,19 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
           <div className="absolute top-1/2 left-0 w-1 h-8 bg-muted-foreground/50 -translate-y-1/2" />
           <div className="absolute top-1/2 right-0 w-1 h-8 bg-muted-foreground/50 -translate-y-1/2" />
 
-          {/* Hover ghost dot */}
-          {hoverPosition !== null && !revealed && !justGuessed && (
+          {/* Interactive dot area - tiny inset to center dots on end caps */}
+          <div
+            ref={lineRef}
+            className={`absolute inset-y-0 left-0.5 right-0.5 ${!revealed && !justGuessed ? 'cursor-crosshair' : ''}`}
+            onMouseMove={handleMouseMove}
+            onMouseLeave={handleMouseLeave}
+            onClick={handleClick}
+          >
+            {/* Hover ghost dot */}
+          {hoverValue !== null && !revealed && !justGuessed && (
             <div
               className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 pointer-events-none"
-              style={{ left: `${hoverPosition}%` }}
+              style={{ left: `${getPositionFromValue(hoverValue)}%` }}
             >
               <div className="w-6 h-6 rounded-full bg-zinc-400/50 border-2 border-zinc-400" />
             </div>
@@ -202,12 +201,11 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
 
           {/* Submitted guesses */}
           {guesses.map((guess) => {
-            const pos = getPositionFromValue(guess.value)
             return (
               <div
                 key={guess.id}
                 className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2"
-                style={{ left: `${pos}%` }}
+                style={{ left: `${getPositionFromValue(guess.value)}%` }}
               >
                 <div
                   className={`w-4 h-4 rounded-full transition-all ${
@@ -237,6 +235,7 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
               </div>
             </div>
           )}
+          </div>
         </div>
 
         {/* Range labels */}
