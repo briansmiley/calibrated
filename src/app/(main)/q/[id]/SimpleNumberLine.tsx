@@ -93,7 +93,7 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
 
 
   const handleMouseMove = (e: React.MouseEvent) => {
-    if (revealed || justGuessed) return
+    if (justGuessed) return
     const value = getValueFromPosition(e.clientX)
     setHoverValue(value)
   }
@@ -103,7 +103,7 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
   }
 
   const submitGuess = async (value: number) => {
-    if (revealed || justGuessed) return
+    if (justGuessed) return
     if (value < question.min_value || value > question.max_value) return
 
     const { data, error } = await supabase
@@ -126,7 +126,7 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
   }
 
   const handleClick = (e: React.MouseEvent) => {
-    if (revealed || justGuessed) return
+    if (justGuessed) return
     const value = getValueFromPosition(e.clientX)
     setLockedInNumber(value)
   }
@@ -227,13 +227,13 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
           {/* Interactive dot area - tiny inset to center dots on end caps */}
           <div
             ref={lineRef}
-            className={`absolute inset-y-0 left-0.5 right-0.5 ${!revealed && !justGuessed ? 'cursor-crosshair' : ''}`}
+            className={`absolute inset-y-0 left-0.5 right-0.5 ${!justGuessed ? 'cursor-crosshair' : ''}`}
             onMouseMove={handleMouseMove}
             onMouseLeave={handleMouseLeave}
             onClick={handleClick}
           >
             {/* Ghost dot - shows for hover or typed input */}
-            {ghostValue !== null && !isNaN(ghostValue) && ghostValue >= question.min_value && ghostValue <= question.max_value && !revealed && !justGuessed && (
+            {ghostValue !== null && !isNaN(ghostValue) && ghostValue >= question.min_value && ghostValue <= question.max_value && !justGuessed && (
               <div
                 className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 pointer-events-none"
                 style={{ left: `${getPositionFromValue(ghostValue)}%` }}
@@ -269,8 +269,8 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
             )
           })}
 
-          {/* True answer (only when revealed) */}
-          {revealed && (
+          {/* True answer (only after user guesses, if revealed) */}
+          {revealed && justGuessed && (
             <div
               className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 z-10"
               style={{ left: `${getPositionFromValue(question.true_answer)}%` }}
@@ -300,8 +300,8 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
           </Tooltip>
         </div>
 
-        {/* Guess input - always visible when not revealed */}
-        {!revealed && !justGuessed && (() => {
+        {/* Guess input - visible until user has guessed */}
+        {!justGuessed && (() => {
           const displayNumber = hoverValue ?? lockedInNumber
           const displayValue = displayNumber !== null ? formatWithCommas(displayNumber) : ''
           const inputWidth = Math.max(displayValue.length || 1, 3) // min 3 chars wide
@@ -380,7 +380,7 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
           </div>
         )}
 
-        {revealed && (
+        {revealed && justGuessed && (
           <p className="text-green-500 font-medium">
             Answer: {formatValue(question.true_answer)}
           </p>
