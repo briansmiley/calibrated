@@ -273,16 +273,20 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
         </div>
 
         {/* Guess input - always visible when not revealed */}
-        {!revealed && !justGuessed && (
+        {!revealed && !justGuessed && (() => {
+          const displayValue = hoverValue !== null ? formatWithCommas(hoverValue) : lockedInValue
+          const inputWidth = Math.max(displayValue.length || 1, 3) // min 3 chars wide
+          return (
           <div className="flex items-center justify-center gap-3 mt-4">
             <input
               type="text"
               inputMode="decimal"
-              value={hoverValue !== null ? formatWithCommas(hoverValue) : lockedInValue}
+              value={displayValue}
               onChange={(e) => setLockedInValue(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleInputSubmit()}
               placeholder="—"
-              className={`w-24 text-center text-2xl font-mono bg-transparent border-b border-muted-foreground/30 focus:border-primary focus:outline-none py-1 ${isOutOfRange ? 'line-through text-muted-foreground' : ''}`}
+              style={{ width: `${inputWidth + 1}ch` }}
+              className={`text-center text-2xl font-mono bg-transparent border-b border-muted-foreground/30 focus:border-primary focus:outline-none py-1 ${isOutOfRange ? 'line-through text-muted-foreground' : ''}`}
             />
             <Tooltip>
               <TooltipTrigger asChild>
@@ -301,7 +305,8 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
               )}
             </Tooltip>
           </div>
-        )}
+          )
+        })()}
       </div>
 
       {/* Action area */}
