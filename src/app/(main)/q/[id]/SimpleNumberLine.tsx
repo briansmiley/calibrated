@@ -123,7 +123,7 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
   const handleClick = (e: React.MouseEvent) => {
     if (revealed || justGuessed) return
     const value = getValueFromPosition(e.clientX)
-    setLockedInValue(formatValue(value))
+    setLockedInValue(String(value))
   }
 
   const handleInputSubmit = async () => {
@@ -276,7 +276,7 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
           <div className="flex items-center justify-center gap-3 mt-4">
             <input
               type="number"
-              value={hoverValue !== null ? formatValue(hoverValue) : lockedInValue}
+              value={hoverValue !== null ? hoverValue : lockedInValue}
               onChange={(e) => setLockedInValue(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleInputSubmit()}
               placeholder="—"
