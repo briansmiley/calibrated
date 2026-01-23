@@ -6,7 +6,8 @@ import { SimpleQuestion, SimpleGuess } from '@/types/database'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
-import { FaLock, FaCheck } from 'react-icons/fa'
+import { FaLock, FaCheck, FaPlus } from 'react-icons/fa'
+import { BsIncognito } from 'react-icons/bs'
 import { formatWithCommas } from '@/lib/format'
 
 interface Props {
@@ -28,6 +29,9 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
   const [showPinInput, setShowPinInput] = useState(false)
   const [pinInput, setPinInput] = useState('')
   const [pinError, setPinError] = useState(false)
+  const [showNameInput, setShowNameInput] = useState(false)
+  const [nameInput, setNameInput] = useState('')
+  const [hoveredGuessId, setHoveredGuessId] = useState<string | null>(null)
 
   const hasPin = question.reveal_pin !== null
 
@@ -111,6 +115,7 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
       .insert({
         question_id: question.id,
         value: value,
+        name: nameInput.trim() || null,
       })
       .select()
       .single()
@@ -122,6 +127,8 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
       setMyGuessId(data.id)
       setHoverValue(null)
       setLockedInNumber(null)
+      setNameInput('')
+      setShowNameInput(false)
     }
   }
 
@@ -234,12 +241,27 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
           {/* Submitted guesses */}
           {showGuesses && guesses.map((guess) => {
             const isMyGuess = guess.id === myGuessId
+            const isHovered = hoveredGuessId === guess.id
+            const showDetails = revealed || isMyGuess || isHovered
             return (
               <div
                 key={guess.id}
                 className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2"
                 style={{ left: `${getPositionFromValue(guess.value)}%` }}
+                onMouseEnter={() => setHoveredGuessId(guess.id)}
+                onMouseLeave={() => setHoveredGuessId(null)}
               >
+                {/* Name label above (with arrow only for own guess) */}
+                {(isMyGuess || isHovered) && (
+                  <div className="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 flex flex-col items-center">
+                    <span className="text-lg text-muted-foreground whitespace-nowrap">
+                      {guess.name || <BsIncognito className="h-5 w-5" />}
+                    </span>
+                    {isMyGuess && (
+                      <div className="w-0 h-0 border-l-[8px] border-r-[8px] border-t-[8px] border-l-transparent border-r-transparent border-t-muted-foreground" />
+                    )}
+                  </div>
+                )}
                 <div
                   className={`rounded-full transition-all ${
                     isMyGuess ? 'w-5 h-5' : 'w-4 h-4'
@@ -249,8 +271,8 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
                       : 'bg-zinc-600'
                   }`}
                 />
-                {(revealed || isMyGuess) && (
-                  <div className="absolute top-full mt-1 left-1/2 -translate-x-1/2 text-xs text-muted-foreground whitespace-nowrap">
+                {showDetails && (
+                  <div className="absolute top-full mt-1 left-1/2 -translate-x-1/2 text-lg text-muted-foreground whitespace-nowrap">
                     {formatValue(guess.value)}
                   </div>
                 )}
@@ -274,7 +296,7 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
         </div>
 
         {/* Range labels */}
-        <div className="flex justify-between text-sm text-muted-foreground mt-2">
+        <div className="flex justify-between text-xl text-muted-foreground mt-2">
           <Tooltip clickable>
             <TooltipTrigger asChild>
               <span>{formatValue(question.min_value)}</span>
@@ -295,6 +317,7 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
           const displayValue = displayNumber !== null ? formatWithCommas(displayNumber) : ''
           const inputWidth = Math.max(displayValue.length || 1, 3) // min 3 chars wide
           return (
+          <>
           <div className="flex items-center justify-center gap-3 mt-4">
             <input
               type="text"
@@ -323,6 +346,35 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
               )}
             </Tooltip>
           </div>
+          {/* Name input */}
+          <div className="flex justify-center mt-4">
+            {!showNameInput ? (
+              <button
+                type="button"
+                onClick={() => setShowNameInput(true)}
+                className="flex items-center gap-1.5 text-lg text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <FaPlus className="h-3.5 w-3.5" />
+                <span>Name</span>
+              </button>
+            ) : (
+              <input
+                type="text"
+                value={nameInput}
+                onChange={(e) => setNameInput(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleInputSubmit()}
+                onBlur={() => !nameInput.trim() && setShowNameInput(false)}
+                placeholder="Name"
+                style={{ width: `calc(${Math.max(nameInput.length, 4)}ch + 1rem)` }}
+                className="text-center text-xl font-mono bg-transparent border-b border-muted-foreground/30 focus:border-primary focus:outline-none py-1"
+                autoFocus
+                autoComplete="off"
+                data-1p-ignore
+                data-lpignore="true"
+              />
+            )}
+          </div>
+          </>
           )
         })()}
       </div>
