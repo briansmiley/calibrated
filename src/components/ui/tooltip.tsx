@@ -19,11 +19,34 @@ function TooltipProvider({
 }
 
 function Tooltip({
+  clickable,
+  children,
   ...props
-}: React.ComponentProps<typeof TooltipPrimitive.Root>) {
+}: React.ComponentProps<typeof TooltipPrimitive.Root> & { clickable?: boolean }) {
+  const [open, setOpen] = React.useState(false)
+
+  if (!clickable) {
+    return (
+      <TooltipProvider>
+        <TooltipPrimitive.Root data-slot="tooltip" {...props}>
+          {children}
+        </TooltipPrimitive.Root>
+      </TooltipProvider>
+    )
+  }
+
   return (
     <TooltipProvider>
-      <TooltipPrimitive.Root data-slot="tooltip" {...props} />
+      <TooltipPrimitive.Root
+        data-slot="tooltip"
+        open={open}
+        onOpenChange={setOpen}
+        {...props}
+      >
+        <div onClick={() => setOpen((prev) => !prev)}>
+          {children}
+        </div>
+      </TooltipPrimitive.Root>
     </TooltipProvider>
   )
 }
