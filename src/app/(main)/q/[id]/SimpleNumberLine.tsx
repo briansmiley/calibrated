@@ -243,7 +243,7 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
             )}
 
           {/* Submitted guesses */}
-          {(showGuesses || revealed) && guesses.map((guess) => {
+          {showGuesses && guesses.map((guess) => {
             const isMyGuess = guess.id === myGuessId
             return (
               <div
