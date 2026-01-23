@@ -86,7 +86,7 @@ export default function CreateSimplePage() {
     }
 
     const shortId = data.id.slice(0, 7)
-    router.push(`/s/${shortId}`)
+    router.push(`/q/${shortId}`)
   }
 
   const isValid = title.trim() && minValue && maxValue && trueAnswer && (!useLock || pin)

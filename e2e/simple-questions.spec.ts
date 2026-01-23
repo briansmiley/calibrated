@@ -1,17 +1,17 @@
 import { test, expect } from '@playwright/test';
 
-test.describe('Simple Question Creation', () => {
-  test('can access quick question page from home', async ({ page }) => {
+test.describe('Question Creation', () => {
+  test('can access create page from home', async ({ page }) => {
     await page.goto('/');
 
-    await page.getByText('Quick Question').click();
+    await page.getByText('Create Question').click();
 
-    await expect(page).toHaveURL('/create/simple');
+    await expect(page).toHaveURL('/create');
     await expect(page.getByPlaceholder("What's your question?")).toBeVisible();
   });
 
-  test('can create a simple question', async ({ page }) => {
-    await page.goto('/create/simple');
+  test('can create a question', async ({ page }) => {
+    await page.goto('/create');
 
     await page.getByPlaceholder("What's your question?").fill('How many stars in the sky?');
     await page.getByPlaceholder('Min').fill('0');
@@ -20,13 +20,13 @@ test.describe('Simple Question Creation', () => {
 
     await page.getByRole('button', { name: 'Create' }).click();
 
-    // Should redirect to /s/{id}
-    await expect(page).toHaveURL(/\/s\/[a-f0-9]{7}/);
+    // Should redirect to /q/{id}
+    await expect(page).toHaveURL(/\/q\/[a-f0-9]{7}/);
     await expect(page.getByText('How many stars in the sky?')).toBeVisible();
   });
 
   test('can add description via +Details button', async ({ page }) => {
-    await page.goto('/create/simple');
+    await page.goto('/create');
 
     // Click +Details to show description field
     await page.getByText('Details').click();
@@ -41,12 +41,12 @@ test.describe('Simple Question Creation', () => {
 
     await page.getByRole('button', { name: 'Create' }).click();
 
-    await expect(page).toHaveURL(/\/s\/[a-f0-9]{7}/);
+    await expect(page).toHaveURL(/\/q\/[a-f0-9]{7}/);
     await expect(page.getByText('This is extra context')).toBeVisible();
   });
 
   test('can set a reveal PIN', async ({ page }) => {
-    await page.goto('/create/simple');
+    await page.goto('/create');
 
     await page.getByPlaceholder("What's your question?").fill('PIN protected question');
     await page.getByPlaceholder('Min').fill('0');
@@ -64,11 +64,11 @@ test.describe('Simple Question Creation', () => {
 
     await page.getByRole('button', { name: 'Create' }).click();
 
-    await expect(page).toHaveURL(/\/s\/[a-f0-9]{7}/);
+    await expect(page).toHaveURL(/\/q\/[a-f0-9]{7}/);
   });
 
   test('validates required fields', async ({ page }) => {
-    await page.goto('/create/simple');
+    await page.goto('/create');
 
     // Create button should be disabled without required fields
     await expect(page.getByRole('button', { name: 'Create' })).toBeDisabled();
@@ -88,18 +88,18 @@ test.describe('Simple Question Creation', () => {
   });
 });
 
-test.describe('Simple Question Guessing', () => {
+test.describe('Question Guessing', () => {
   let questionUrl: string;
 
   test.beforeEach(async ({ page }) => {
-    // Create a simple question first
-    await page.goto('/create/simple');
+    // Create a question first
+    await page.goto('/create');
     await page.getByPlaceholder("What's your question?").fill('Guess the number');
     await page.getByPlaceholder('Min').fill('0');
     await page.getByPlaceholder('Max').fill('100');
     await page.getByPlaceholder('Answer').fill('73');
     await page.getByRole('button', { name: 'Create' }).click();
-    await expect(page).toHaveURL(/\/s\/[a-f0-9]{7}/);
+    await expect(page).toHaveURL(/\/q\/[a-f0-9]{7}/);
     questionUrl = page.url();
   });
 
@@ -157,17 +157,17 @@ test.describe('Simple Question Guessing', () => {
   });
 });
 
-test.describe('Simple Question Reveal', () => {
+test.describe('Question Reveal', () => {
   test('can reveal answer without PIN', async ({ page }) => {
     // Create question without PIN
-    await page.goto('/create/simple');
+    await page.goto('/create');
     await page.getByPlaceholder("What's your question?").fill('No PIN question');
     await page.getByPlaceholder('Min').fill('0');
     await page.getByPlaceholder('Max').fill('100');
     await page.getByPlaceholder('Answer').fill('42');
     await page.getByRole('button', { name: 'Create' }).click();
 
-    await expect(page).toHaveURL(/\/s\/[a-f0-9]{7}/);
+    await expect(page).toHaveURL(/\/q\/[a-f0-9]{7}/);
 
     // Click reveal
     await page.getByRole('button', { name: 'Reveal Answer' }).click();
@@ -178,7 +178,7 @@ test.describe('Simple Question Reveal', () => {
 
   test('PIN-protected question requires PIN to reveal', async ({ page }) => {
     // Create question with PIN
-    await page.goto('/create/simple');
+    await page.goto('/create');
     await page.getByPlaceholder("What's your question?").fill('PIN question');
     await page.getByPlaceholder('Min').fill('0');
     await page.getByPlaceholder('Max').fill('100');
@@ -190,7 +190,7 @@ test.describe('Simple Question Reveal', () => {
     await pinInput.fill('123456');
 
     await page.getByRole('button', { name: 'Create' }).click();
-    await expect(page).toHaveURL(/\/s\/[a-f0-9]{7}/);
+    await expect(page).toHaveURL(/\/q\/[a-f0-9]{7}/);
 
     // Reveal button should show lock icon
     const revealButton = page.getByRole('button', { name: 'Reveal Answer' });
@@ -216,14 +216,14 @@ test.describe('Simple Question Reveal', () => {
   });
 
   test('cannot submit guess after reveal', async ({ page }) => {
-    await page.goto('/create/simple');
+    await page.goto('/create');
     await page.getByPlaceholder("What's your question?").fill('Revealed question');
     await page.getByPlaceholder('Min').fill('0');
     await page.getByPlaceholder('Max').fill('100');
     await page.getByPlaceholder('Answer').fill('50');
     await page.getByRole('button', { name: 'Create' }).click();
 
-    await expect(page).toHaveURL(/\/s\/[a-f0-9]{7}/);
+    await expect(page).toHaveURL(/\/q\/[a-f0-9]{7}/);
 
     // Reveal first
     await page.getByRole('button', { name: 'Reveal Answer' }).click();

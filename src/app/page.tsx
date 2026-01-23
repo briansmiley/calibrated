@@ -1,17 +1,7 @@
 import Link from 'next/link'
-import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
 import { CalibratedLogo } from '@/components/CalibratedLogo'
-import { FaBolt } from 'react-icons/fa'
 
-export default async function Home() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-
-  if (user) {
-    redirect('/dashboard')
-  }
-
+export default function Home() {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen px-4">
       <h1 className="text-foreground text-center">
@@ -58,18 +48,10 @@ export default async function Home() {
       </div>
 
       <Link
-        href="/create/simple"
-        className="mt-16 flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+        href="/create"
+        className="mt-16 px-6 py-3 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 transition-colors font-medium"
       >
-        <FaBolt className="h-4 w-4" />
-        <span>Quick Question</span>
-      </Link>
-
-      <Link
-        href="/login"
-        className="mt-4 text-sm text-muted-foreground/50 hover:text-muted-foreground transition-colors"
-      >
-        Sign In / Up
+        Create Question
       </Link>
     </div>
   )
