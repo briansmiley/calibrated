@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { FaArrowRight } from 'react-icons/fa'
 import { CalibratedLogo } from '@/components/CalibratedLogo'
 import { AnimatedNumberLine } from '@/components/AnimatedNumberLine'
 import { INITIAL_DELAY } from '@/lib/animationTiming'
@@ -17,9 +18,10 @@ export default function Home() {
 
       <Link
         href="/create"
-        className="mt-16 px-6 py-3 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 transition-colors font-medium"
+        className="mt-16 px-6 py-3 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 transition-colors font-medium flex items-center gap-2"
       >
-        Create Question
+        Pose Question
+        <FaArrowRight className="h-4 w-4" />
       </Link>
     </div>
   )
