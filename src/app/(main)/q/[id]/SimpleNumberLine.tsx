@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { FaLock, FaCheck } from 'react-icons/fa'
-import { formatWithCommas, parseWithCommas } from '@/lib/format'
+import { formatWithCommas } from '@/lib/format'
 
 interface Props {
   question: SimpleQuestion
@@ -21,7 +21,7 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
   const [guesses, setGuesses] = useState<SimpleGuess[]>(initialGuesses)
   const [revealed, setRevealed] = useState(question.revealed)
   const [hoverValue, setHoverValue] = useState<number | null>(null)
-  const [lockedInValue, setLockedInValue] = useState('')
+  const [lockedInNumber, setLockedInNumber] = useState<number | null>(null)
   const [justGuessed, setJustGuessed] = useState(false)
   const [showPinInput, setShowPinInput] = useState(false)
   const [pinInput, setPinInput] = useState('')
@@ -117,36 +117,47 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
       setGuesses((prev) => [...prev, data])
       setJustGuessed(true)
       setHoverValue(null)
-      setLockedInValue('')
+      setLockedInNumber(null)
     }
   }
 
   const handleClick = (e: React.MouseEvent) => {
     if (revealed || justGuessed) return
     const value = getValueFromPosition(e.clientX)
-    setLockedInValue(formatWithCommas(value))
+    setLockedInNumber(value)
   }
 
-  const handleInputSubmit = async () => {
-    const value = parseWithCommas(lockedInValue)
-    if (!isNaN(value)) {
-      await submitGuess(value)
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.value.replace(/,/g, '') // strip commas
+    if (raw === '' || raw === '-') {
+      setLockedInNumber(null)
+      return
+    }
+    const parsed = parseFloat(raw)
+    if (!isNaN(parsed)) {
+      setLockedInNumber(parsed)
     }
   }
 
-  // Parse locked-in value (strip commas for validation)
-  const parsedLockedIn = lockedInValue !== '' ? parseWithCommas(lockedInValue) : null
-  const isLockedInValid = parsedLockedIn !== null && !isNaN(parsedLockedIn)
-  const isInRange = isLockedInValid && parsedLockedIn >= question.min_value && parsedLockedIn <= question.max_value
+  const handleInputSubmit = async () => {
+    if (lockedInNumber !== null) {
+      await submitGuess(lockedInNumber)
+    }
+  }
+
+  // Validation
+  const isInRange = lockedInNumber !== null &&
+    lockedInNumber >= question.min_value &&
+    lockedInNumber <= question.max_value
 
   // Get the value to show ghost dot for (hover takes precedence, then locked-in if in range)
-  const ghostValue = hoverValue ?? (isInRange ? parsedLockedIn : null)
+  const ghostValue = hoverValue ?? (isInRange ? lockedInNumber : null)
 
   // Check if current locked-in value is valid for submission
   const isInputValid = isInRange
 
   // Check if value is out of range (for strikethrough styling)
-  const isOutOfRange = isLockedInValid && !isInRange
+  const isOutOfRange = lockedInNumber !== null && !isInRange
 
   const handleReveal = async () => {
     if (hasPin && !showPinInput) {
@@ -274,7 +285,8 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
 
         {/* Guess input - always visible when not revealed */}
         {!revealed && !justGuessed && (() => {
-          const displayValue = hoverValue !== null ? formatWithCommas(hoverValue) : lockedInValue
+          const displayNumber = hoverValue ?? lockedInNumber
+          const displayValue = displayNumber !== null ? formatWithCommas(displayNumber) : ''
           const inputWidth = Math.max(displayValue.length || 1, 3) // min 3 chars wide
           return (
           <div className="flex items-center justify-center gap-3 mt-4">
@@ -282,7 +294,7 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
               type="text"
               inputMode="decimal"
               value={displayValue}
-              onChange={(e) => setLockedInValue(e.target.value)}
+              onChange={handleInputChange}
               onKeyDown={(e) => e.key === 'Enter' && handleInputSubmit()}
               placeholder="—"
               style={{ width: `${inputWidth + 1}ch` }}
