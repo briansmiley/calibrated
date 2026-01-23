@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
-import { FaLock, FaLockOpen, FaPlus, FaQuestionCircle } from 'react-icons/fa'
+import { FaLock, FaLockOpen, FaPlus, FaQuestionCircle, FaRegCopy } from 'react-icons/fa'
 
 function generatePin(): string {
   // Generate 4 digit PIN where not all digits are the same
@@ -31,6 +31,13 @@ export default function CreateSimplePage() {
   const [pin, setPin] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [copied, setCopied] = useState(false)
+
+  const handleCopyPin = async () => {
+    await navigator.clipboard.writeText(pin)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 1500)
+  }
 
   const handleToggleLock = () => {
     if (!useLock) {
@@ -200,15 +207,25 @@ export default function CreateSimplePage() {
             </button>
 
             {useLock && (
-              <Input
-                variant="underline"
-                type="text"
-                placeholder="PIN"
-                value={pin}
-                onChange={(e) => setPin(e.target.value.slice(0, 20))}
-                className="w-32 text-center font-mono"
-                maxLength={20}
-              />
+              <>
+                <Input
+                  variant="underline"
+                  type="text"
+                  placeholder="PIN"
+                  value={pin}
+                  onChange={(e) => setPin(e.target.value.slice(0, 20))}
+                  className="w-32 text-center font-mono"
+                  maxLength={20}
+                />
+                <button
+                  type="button"
+                  onClick={handleCopyPin}
+                  className="p-2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                  title="Copy PIN"
+                >
+                  {copied ? <span className="text-xs">Copied!</span> : <FaRegCopy className="h-4 w-4" />}
+                </button>
+              </>
             )}
           </div>
 
