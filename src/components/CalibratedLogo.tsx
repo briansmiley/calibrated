@@ -5,28 +5,25 @@ interface CalibratedLogoProps {
   delay?: number // delay in seconds before animation starts
 }
 
-// Box plot icon rotated 90 degrees to look like an "I"
+// Box plot icon drawn vertically (like an "I")
 function LogoIcon({ className }: { className?: string }) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
       viewBox="0 0 32 32"
       className={className}
-      style={{ transform: 'rotate(90deg)' }}
     >
-      {/* Left whisker (becomes top) */}
-      <line x1="4" y1="16" x2="9" y2="16" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/>
-      <line x1="4" y1="11" x2="4" y2="21" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/>
+      {/* Box (drawn first, behind stem) */}
+      <rect x="8" y="9" width="16" height="14" rx="2" fill="#22c55e"/>
 
-      {/* Box */}
-      <rect x="9" y="8" width="14" height="16" rx="2" fill="#22c55e"/>
+      {/* Vertical stem - goes all the way through */}
+      <line x1="16" y1="4" x2="16" y2="28" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/>
 
-      {/* Median line */}
-      <line x1="9" y1="16" x2="23" y2="16" stroke="currentColor" strokeWidth="2.5"/>
+      {/* Top cap */}
+      <line x1="11" y1="4" x2="21" y2="4" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/>
 
-      {/* Right whisker (becomes bottom) */}
-      <line x1="23" y1="16" x2="28" y2="16" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/>
-      <line x1="28" y1="11" x2="28" y2="21" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/>
+      {/* Bottom cap */}
+      <line x1="11" y1="28" x2="21" y2="28" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/>
     </svg>
   )
 }
@@ -41,32 +38,31 @@ function AnimatedLogoIcon({ className, delay = 0 }: { className?: string; delay?
       xmlns="http://www.w3.org/2000/svg"
       viewBox="0 0 32 32"
       className={className}
-      style={{ transform: 'rotate(90deg)' }}
     >
       <style>{`
         @keyframes expand { to { transform: scale(1) } }
         .stem {
-          transform: scaleX(0);
+          transform: scaleY(0);
           transform-origin: 16px 16px;
           animation: expand 0.4s ease-out ${stemDelay}s forwards;
         }
         .cap {
-          transform: scaleY(0);
+          transform: scaleX(0);
           animation: expand 0.3s ease-out ${capDelay}s forwards;
         }
-        .cap-left { transform-origin: 4px 16px; }
-        .cap-right { transform-origin: 28px 16px; }
+        .cap-top { transform-origin: 16px 4px; }
+        .cap-bottom { transform-origin: 16px 28px; }
       `}</style>
 
       {/* Box (no animation) - drawn first (bottom layer) */}
-      <rect x="9" y="8" width="14" height="16" rx="2" fill="#22c55e"/>
+      <rect x="8" y="9" width="16" height="14" rx="2" fill="#22c55e"/>
 
-      {/* Stem - grows from center outward, drawn on top of box */}
-      <line className="stem" x1="4" y1="16" x2="28" y2="16" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/>
+      {/* Stem - grows from center outward vertically, drawn on top of box */}
+      <line className="stem" x1="16" y1="4" x2="16" y2="28" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/>
 
-      {/* Caps - expand from center */}
-      <line className="cap cap-left" x1="4" y1="11" x2="4" y2="21" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/>
-      <line className="cap cap-right" x1="28" y1="11" x2="28" y2="21" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/>
+      {/* Caps - expand from center horizontally */}
+      <line className="cap cap-top" x1="11" y1="4" x2="21" y2="4" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/>
+      <line className="cap cap-bottom" x1="11" y1="28" x2="21" y2="28" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/>
     </svg>
   )
 }
