@@ -99,16 +99,13 @@ export default function CreateSimplePage() {
   return (
     <div className="mx-auto max-w-xl py-12 px-4">
       <div className="text-center mb-8">
-        <h1 className="text-2xl font-bold mb-2">Quick Question</h1>
-        <p className="text-muted-foreground">
-          Create a number line. Share the link. Collect guesses.
-        </p>
+        <h1 className="text-2xl font-bold">Create Question</h1>
       </div>
 
       <div className="space-y-4">
         {/* Question title */}
         <div>
-          <label className="text-base text-muted-foreground block mb-3">Question*</label>
+          <label className="text-base font-bold block mb-3">Question<span className="text-muted-foreground">*</span></label>
           <Input
             type="text"
             placeholder="What's your question?"
@@ -139,7 +136,7 @@ export default function CreateSimplePage() {
 
         {/* Answer */}
         <div className="pt-2">
-          <label className="text-base text-muted-foreground block mb-3">Answer*</label>
+          <label className="text-base font-bold block mb-3">Answer<span className="text-muted-foreground">*</span></label>
           <Input
             type="number"
             placeholder="Value"
@@ -151,7 +148,7 @@ export default function CreateSimplePage() {
 
         {/* Guess Range */}
         <div className="pt-2">
-          <label className="text-base text-muted-foreground block mb-3">Guess Range*</label>
+          <label className="text-base font-bold block mb-3">Range<span className="text-muted-foreground">*</span></label>
           <div className="flex items-center gap-2">
             <Input
               type="number"
@@ -184,7 +181,7 @@ export default function CreateSimplePage() {
                 Set a PIN to password-protect revealing the actual value
               </TooltipContent>
             </Tooltip>
-            <span className="text-sm text-muted-foreground">PIN?</span>
+            <span className="text-sm font-bold">Pin</span>
             <button
               type="button"
               onClick={handleToggleLock}
