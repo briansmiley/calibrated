@@ -2,6 +2,7 @@ interface CalibratedLogoProps {
   size?: 'sm' | 'lg'
   className?: string
   animate?: boolean
+  delay?: number // delay in seconds before animation starts
 }
 
 // Box plot icon rotated 90 degrees to look like an "I"
@@ -31,7 +32,10 @@ function LogoIcon({ className }: { className?: string }) {
 }
 
 // Animated version - single stem grows from center, then caps spread
-function AnimatedLogoIcon({ className }: { className?: string }) {
+function AnimatedLogoIcon({ className, delay = 0 }: { className?: string; delay?: number }) {
+  const stemDelay = delay + 0.1
+  const capDelay = delay + 0.45
+
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -44,11 +48,11 @@ function AnimatedLogoIcon({ className }: { className?: string }) {
         .stem {
           transform: scaleX(0);
           transform-origin: 16px 16px;
-          animation: expand 0.4s ease-out 0.6s forwards;
+          animation: expand 0.4s ease-out ${stemDelay}s forwards;
         }
         .cap {
           transform: scaleY(0);
-          animation: expand 0.3s ease-out 0.95s forwards;
+          animation: expand 0.3s ease-out ${capDelay}s forwards;
         }
         .cap-left { transform-origin: 4px 16px; }
         .cap-right { transform-origin: 28px 16px; }
@@ -80,14 +84,17 @@ const sizes = {
   },
 }
 
-export function CalibratedLogo({ size = 'lg', className = '', animate = false }: CalibratedLogoProps) {
+export function CalibratedLogo({ size = 'lg', className = '', animate = false, delay = 0 }: CalibratedLogoProps) {
   const s = sizes[size]
-  const Icon = animate ? AnimatedLogoIcon : LogoIcon
 
   return (
     <span className={`inline-flex items-baseline font-bold ${s.text} ${className}`}>
       <span>Cal</span>
-      <Icon className={`${s.icon} ${s.iconMargin} self-center`} />
+      {animate ? (
+        <AnimatedLogoIcon className={`${s.icon} ${s.iconMargin} self-center`} delay={delay} />
+      ) : (
+        <LogoIcon className={`${s.icon} ${s.iconMargin} self-center`} />
+      )}
       <span>brated</span>
     </span>
   )
