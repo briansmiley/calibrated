@@ -1,8 +1,13 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 
 const DOT_COUNT = 7
+const EXIT_DURATION = 0.5 // seconds for collapse animation
+const PAUSE_AFTER_LOGO = 3 // seconds to wait after logo animates before looping
+const LOGO_ANIMATION_DURATION = 0.75 // approximate time for logo animation
+const RESTART_DELAY = 1 // seconds to wait before new cycle starts
+const DOT_START_DELAY = 0.5 // seconds to wait after line before dots appear
 
 function shuffleArray<T>(array: T[]): T[] {
   const shuffled = [...array]
@@ -32,17 +37,40 @@ export function AnimatedNumberLine({ duration }: AnimatedNumberLineProps) {
     dotOrder: number[]
     diamondPosition: number
   } | null>(null)
+  const [exiting, setExiting] = useState(false)
+  const [cycleKey, setCycleKey] = useState(0)
+  const [lineVisible, setLineVisible] = useState(false)
+
+  const totalAnimationTime = duration + LOGO_ANIMATION_DURATION
+  const cycleTime = totalAnimationTime + PAUSE_AFTER_LOGO
+
+  const startNewCycle = useCallback(() => {
+    setData(generateRandomData())
+    setExiting(false)
+    setCycleKey(k => k + 1)
+  }, [])
 
   useEffect(() => {
     setData(generateRandomData())
+    setLineVisible(true)
   }, [])
 
-  // Derive timing from total duration
+  useEffect(() => {
+    if (!data) return
+
+    const exitTimer = setTimeout(() => setExiting(true), cycleTime * 1000)
+    const restartTimer = setTimeout(startNewCycle, (cycleTime + EXIT_DURATION + RESTART_DELAY) * 1000)
+
+    return () => {
+      clearTimeout(exitTimer)
+      clearTimeout(restartTimer)
+    }
+  }, [data, cycleTime, startNewCycle])
+
   const lineDuration = duration * 0.16
   const dotInterval = duration * 0.08
   const diamondDelay = duration * 0.16
 
-  // Don't render until client-side data is ready
   if (!data) {
     return <div className="mt-12 w-full max-w-md h-3" />
   }
@@ -55,41 +83,47 @@ export function AnimatedNumberLine({ duration }: AnimatedNumberLineProps) {
         @keyframes expandLine { to { transform: scaleX(1) } }
         @keyframes popIn { to { transform: scale(1) } }
         @keyframes popInDiamond { to { transform: translateX(-50%) scale(1) rotate(45deg) } }
+        @keyframes collapse { from { transform: scale(1) } to { transform: scaleY(0) } }
+        @keyframes collapseDiamond { from { transform: translateX(-50%) scale(1) rotate(45deg) } to { transform: translateX(-50%) scaleY(0) rotate(45deg) } }
       `}</style>
 
-      <div className="relative">
-        {/* The line - spreads from left */}
+      <div className="relative py-2">
+        {/* Static line - animates in once then stays */}
         <div
           className="h-0.5 bg-muted-foreground/30 w-full origin-left"
-          style={{
+          style={lineVisible ? {
             transform: 'scaleX(0)',
             animation: `expandLine ${lineDuration}s ease-out forwards`,
-          }}
+          } : { transform: 'scaleX(0)' }}
         />
 
-        {/* Guess points - pop in in random order */}
+        {/* Dots and diamond - keyed to restart animations */}
         {dotPositions.map((pos, i) => {
           const appearanceIndex = dotOrder.indexOf(i)
           return (
             <div
-              key={i}
+              key={`${cycleKey}-${i}`}
               className="absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-zinc-500"
               style={{
                 left: `${pos}%`,
                 transform: 'scale(0)',
-                animation: `popIn 0.2s ease-out ${lineDuration + appearanceIndex * dotInterval}s forwards`,
+                animation: exiting
+                  ? `collapse ${EXIT_DURATION}s ease-in forwards`
+                  : `popIn 0.2s ease-out ${lineDuration + DOT_START_DELAY + appearanceIndex * dotInterval}s forwards`,
               }}
             />
           )
         })}
 
-        {/* The "true answer" green diamond - appears after all dots */}
         <div
+          key={`diamond-${cycleKey}`}
           className="absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-green-500 shadow-lg shadow-green-500/30 ring-2 ring-green-400/50"
           style={{
             left: `${diamondPosition}%`,
             transform: 'translateX(-50%) scale(0) rotate(45deg)',
-            animation: `popInDiamond 0.25s ease-out ${lineDuration + DOT_COUNT * dotInterval + diamondDelay}s forwards`,
+            animation: exiting
+              ? `collapseDiamond ${EXIT_DURATION}s ease-in forwards`
+              : `popInDiamond 0.25s ease-out ${lineDuration + DOT_START_DELAY + DOT_COUNT * dotInterval + diamondDelay}s forwards`,
           }}
         />
       </div>
