@@ -23,6 +23,8 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
   const [hoverValue, setHoverValue] = useState<number | null>(null)
   const [lockedInNumber, setLockedInNumber] = useState<number | null>(null)
   const [justGuessed, setJustGuessed] = useState(false)
+  const [showGuesses, setShowGuesses] = useState(false)
+  const [myGuessId, setMyGuessId] = useState<string | null>(null)
   const [showPinInput, setShowPinInput] = useState(false)
   const [pinInput, setPinInput] = useState('')
   const [pinError, setPinError] = useState(false)
@@ -116,6 +118,8 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
     if (!error && data) {
       setGuesses((prev) => [...prev, data])
       setJustGuessed(true)
+      setShowGuesses(true)
+      setMyGuessId(data.id)
       setHoverValue(null)
       setLockedInNumber(null)
     }
@@ -239,7 +243,8 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
             )}
 
           {/* Submitted guesses */}
-          {guesses.map((guess) => {
+          {(showGuesses || revealed) && guesses.map((guess) => {
+            const isMyGuess = guess.id === myGuessId
             return (
               <div
                 key={guess.id}
@@ -247,13 +252,15 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
                 style={{ left: `${getPositionFromValue(guess.value)}%` }}
               >
                 <div
-                  className={`w-4 h-4 rounded-full transition-all ${
+                  className={`rounded-full transition-all ${
+                    isMyGuess ? 'w-5 h-5' : 'w-4 h-4'
+                  } ${
                     revealed
                       ? 'bg-zinc-400'
                       : 'bg-zinc-600'
                   }`}
                 />
-                {revealed && (
+                {(revealed || isMyGuess) && (
                   <div className="absolute top-full mt-1 left-1/2 -translate-x-1/2 text-xs text-muted-foreground whitespace-nowrap">
                     {formatValue(guess.value)}
                   </div>
