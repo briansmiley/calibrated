@@ -5,7 +5,8 @@ import { createClient } from '@/lib/supabase/client'
 import { SimpleQuestion, SimpleGuess } from '@/types/database'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { FaLock } from 'react-icons/fa'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { FaLock, FaCheck } from 'react-icons/fa'
 
 interface Props {
   question: SimpleQuestion
@@ -19,6 +20,7 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
   const [guesses, setGuesses] = useState<SimpleGuess[]>(initialGuesses)
   const [revealed, setRevealed] = useState(question.revealed)
   const [hoverValue, setHoverValue] = useState<number | null>(null)
+  const [lockedInValue, setLockedInValue] = useState('')
   const [justGuessed, setJustGuessed] = useState(false)
   const [showPinInput, setShowPinInput] = useState(false)
   const [pinInput, setPinInput] = useState('')
@@ -97,11 +99,9 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
     setHoverValue(null)
   }
 
-  const handleClick = async (e: React.MouseEvent) => {
+  const submitGuess = async (value: number) => {
     if (revealed || justGuessed) return
-
-    // Calculate value from click position (don't depend on hover state)
-    const value = getValueFromPosition(e.clientX)
+    if (value < question.min_value || value > question.max_value) return
 
     const { data, error } = await supabase
       .from('simple_guesses')
@@ -113,12 +113,39 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
       .single()
 
     if (!error && data) {
-      // Optimistically add the guess to local state
       setGuesses((prev) => [...prev, data])
       setJustGuessed(true)
       setHoverValue(null)
+      setLockedInValue('')
     }
   }
+
+  const handleClick = (e: React.MouseEvent) => {
+    if (revealed || justGuessed) return
+    const value = getValueFromPosition(e.clientX)
+    setLockedInValue(formatValue(value))
+  }
+
+  const handleInputSubmit = async () => {
+    const value = parseFloat(lockedInValue)
+    if (!isNaN(value)) {
+      await submitGuess(value)
+    }
+  }
+
+  // Parse locked-in value
+  const parsedLockedIn = lockedInValue !== '' ? parseFloat(lockedInValue) : null
+  const isLockedInValid = parsedLockedIn !== null && !isNaN(parsedLockedIn)
+  const isInRange = isLockedInValid && parsedLockedIn >= question.min_value && parsedLockedIn <= question.max_value
+
+  // Get the value to show ghost dot for (hover takes precedence, then locked-in if in range)
+  const ghostValue = hoverValue ?? (isInRange ? parsedLockedIn : null)
+
+  // Check if current locked-in value is valid for submission
+  const isInputValid = isInRange
+
+  // Check if value is out of range (for strikethrough styling)
+  const isOutOfRange = isLockedInValid && !isInRange
 
   const handleReveal = async () => {
     if (hasPin && !showPinInput) {
@@ -189,15 +216,15 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
             onMouseLeave={handleMouseLeave}
             onClick={handleClick}
           >
-            {/* Hover ghost dot */}
-          {hoverValue !== null && !revealed && !justGuessed && (
-            <div
-              className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 pointer-events-none"
-              style={{ left: `${getPositionFromValue(hoverValue)}%` }}
-            >
-              <div className="w-6 h-6 rounded-full bg-zinc-400/50 border-2 border-zinc-400" />
-            </div>
-          )}
+            {/* Ghost dot - shows for hover or typed input */}
+            {ghostValue !== null && !isNaN(ghostValue) && ghostValue >= question.min_value && ghostValue <= question.max_value && !revealed && !justGuessed && (
+              <div
+                className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 pointer-events-none"
+                style={{ left: `${getPositionFromValue(ghostValue)}%` }}
+              >
+                <div className="w-6 h-6 rounded-full bg-zinc-400/50 border-2 border-zinc-400" />
+              </div>
+            )}
 
           {/* Submitted guesses */}
           {guesses.map((guess) => {
@@ -244,10 +271,33 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
           <span>{formatValue(question.max_value)}</span>
         </div>
 
-        {/* Hover value display */}
-        {hoverValue !== null && !revealed && !justGuessed && (
-          <div className="text-center mt-4">
-            <span className="text-2xl font-mono">{formatValue(hoverValue)}</span>
+        {/* Guess input - always visible when not revealed */}
+        {!revealed && !justGuessed && (
+          <div className="flex items-center justify-center gap-3 mt-4">
+            <input
+              type="number"
+              value={hoverValue !== null ? formatValue(hoverValue) : lockedInValue}
+              onChange={(e) => setLockedInValue(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleInputSubmit()}
+              placeholder="—"
+              className={`w-24 text-center text-2xl font-mono bg-transparent border-b border-muted-foreground/30 focus:border-primary focus:outline-none py-1 ${isOutOfRange ? 'line-through text-muted-foreground' : ''}`}
+            />
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span>
+                  <button
+                    onClick={handleInputSubmit}
+                    disabled={!isInputValid}
+                    className="p-2 rounded-full bg-zinc-300 text-zinc-800 hover:bg-zinc-400 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                  >
+                    <FaCheck className="h-4 w-4" />
+                  </button>
+                </span>
+              </TooltipTrigger>
+              {isOutOfRange && (
+                <TooltipContent>Out of range ({formatValue(question.min_value)}-{formatValue(question.max_value)})</TooltipContent>
+              )}
+            </Tooltip>
           </div>
         )}
       </div>
