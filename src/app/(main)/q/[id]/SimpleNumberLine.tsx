@@ -197,18 +197,10 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
     <div className="mx-auto max-w-4xl py-8 px-4">
       {/* Question title and description */}
       <div className="text-center mb-6">
-        <h1 className="text-2xl font-bold">{question.title}</h1>
+        <h1 className="text-3xl font-bold">{question.title}</h1>
         {question.description && (
           <p className="text-muted-foreground mt-2">{question.description}</p>
         )}
-      </div>
-
-      {/* Guess count */}
-      <div className="text-center mb-8">
-        <span className="text-4xl font-bold">{guesses.length}</span>
-        <span className="text-muted-foreground ml-2">
-          {guesses.length === 1 ? 'guess' : 'guesses'}
-        </span>
       </div>
 
       {/* Number line container */}
