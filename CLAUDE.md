@@ -3,60 +3,66 @@
 > **Maintenance**: Update this file when making significant changes (new features, schema changes, new patterns, etc.).
 
 ## Project Overview
-An estimation game app where users create questions, share links, collect guesses, and reveal results. Think "guess the number" with social features.
+A zero-friction estimation game. Users create questions with a number range and answer, share the link, others click on a number line to guess, then reveal results. No accounts required.
 
 ## Tech Stack
 - **Framework**: Next.js 16 (App Router)
-- **Database + Auth**: Supabase (Postgres + built-in auth)
+- **Database**: Supabase (Postgres)
 - **Styling**: Tailwind CSS + shadcn/ui components
 - **Hosting**: Vercel
-- **Icons**: react-icons (FaEye, FcGoogle), lucide-react
+- **Icons**: react-icons (FaLock, FaLockOpen, FaPlus), lucide-react
 
 ## Key URLs
 - Production: https://calibrated.vercel.app
 - Supabase project: zxaxpoerzsgeomaqjbsc
 
 ## Database Schema
-Two main tables (see `supabase/schema.sql` for full schema with RLS policies):
+Two main tables for the simple question mode (see `supabase/migrations/` for full schema):
 
-**questions**
-- id, creator_id, slug (unique URL), title, description
-- true_answer (optional), unit_type (none/currency/percentage/custom), custom_unit
-- min_value, max_value (optional bounds for guesses)
-- is_public (show in public feed), password (optional access protection)
-- guesses_revealed (show guesses before answer), revealed (fully closed)
+**simple_questions**
+- id (UUID), title, description (optional)
+- min_value, max_value, true_answer
+- reveal_pin (optional 6-digit PIN to protect reveal)
+- revealed (boolean)
 - created_at
 
-**guesses**
-- id, question_id, user_id (nullable for anonymous), display_name, value
-- prior_visible_guesses (tracks if guesser saw other guesses - shown with eye icon)
+**simple_guesses**
+- id (UUID), question_id, value
 - created_at
 
-## Auth Flow
-- Email/password and Google OAuth supported
-- OAuth uses PKCE flow - the callback is client-side (`/auth/callback/page.tsx`) because the PKCE verifier is stored in browser localStorage
-- Session may be established via cookies before callback runs, so we check for existing session first
+### RLS Security Model
+- Fully open tables - anyone can read/write
+- No authentication required
+- Anon key is safe to expose
+
+## Git Workflow
+- **Do not push directly to main** unless explicitly discussed for a given feature
+- Create feature branches and open PRs for review
+- Branch naming: `feature/description` or `fix/description`
+
+## Routes
+- `/` - Home page with logo and "Create Question" button
+- `/create` - Create a new question (title, range, answer, optional PIN)
+- `/q/[id]` - View question, submit guesses, reveal answer
 
 ## Important Patterns
 
-### Timestamps
-Use `<LocalTime date={timestamp} />` component for user-local timezone display (server renders UTC, client hydrates with local time).
+### Short IDs
+Questions use the first 7 characters of their UUID as the URL identifier. The `get_simple_question_by_prefix` RPC function handles prefix matching.
 
-### Unit Formatting
-Use `formatValue()` and `getUnitDisplay()` from `@/lib/formatValue.ts` for consistent number formatting with currency/percentage/custom units.
+### Number Line Interaction
+- Users click on the number line to submit a guess (no form needed)
+- Hover shows a ghost dot preview
+- After guessing, users see "Guess recorded!" with option to guess again
+- Realtime subscription updates when others guess
 
-### Two-Phase Reveal
-Questions have separate `guesses_revealed` and `revealed` flags:
-1. Creator can reveal guesses first (participants see each other's answers)
-2. Then reveal the true answer (closes submissions)
-3. Or reveal all at once
+### PIN Protection
+- Optional 6-digit PIN can protect the reveal
+- Auto-generated when lock is enabled
+- Wrong PIN shows error styling on input
 
-### RLS Security Model
-- Anon key is safe to expose - all security via Row Level Security policies
-- Anyone can read questions/guesses
-- Only authenticated users create questions (as themselves)
-- Only creators can update/delete their questions
-- Anyone can submit guesses to unrevealed questions
+### Optimistic Updates
+Guesses are added to the UI immediately after successful insert, before the realtime subscription confirms.
 
 ## Environment Variables
 ```
@@ -65,65 +71,33 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=xxx
 NEXT_PUBLIC_APP_URL=https://calibrated.vercel.app (or http://localhost:3000)
 ```
 
-See `.env.local.supabase-local` for local Supabase development config.
-
 ## Local Development
 ```bash
 pnpm dev             # Start dev server
 pnpm build           # Build for production
-pnpm db:seed         # Seed local database with test data
 supabase start       # Start local Supabase (if using local instance)
 ```
-
-For OAuth testing locally with production Supabase, temporarily change Site URL in Supabase dashboard to `http://localhost:3000`.
 
 ## Testing
 
 ### E2E Tests (Playwright)
-The project uses Playwright for end-to-end testing. Tests are in the `/e2e` directory.
+Tests are in the `/e2e` directory.
 
 ```bash
 pnpm test:e2e        # Run all e2e tests (headless)
 pnpm test:e2e:ui     # Run tests with Playwright UI
 pnpm test:e2e:headed # Run tests in headed browser mode
-pnpm test:e2e:debug  # Debug tests step-by-step
-pnpm test:report     # View HTML test report
 ```
 
-**Test Setup Requirements:**
-1. Start local Supabase: `supabase start`
-2. Seed test data: `pnpm db:seed`
-3. Test users created by seed: alice@example.com, bob@example.com, charlie@example.com (password: password123)
+**Test Coverage:**
+- `/e2e/simple-questions.spec.ts` - Question creation, guessing, and reveal flows
 
-**Test Structure:**
-- `/e2e/fixtures/` - Test utilities, helpers, and fixtures
-- `/e2e/auth.spec.ts` - Authentication tests
-- `/e2e/questions.spec.ts` - Question creation and viewing
-- `/e2e/guesses.spec.ts` - Guess submission and validation
-- `/e2e/results.spec.ts` - Results page and number line
-- `/e2e/feed.spec.ts` - Public feed and password protection
-
-**Running Specific Tests:**
-```bash
-pnpm test:e2e -- e2e/auth.spec.ts        # Run only auth tests
-pnpm test:e2e -- --grep "login"          # Run tests matching "login"
-```
-
-**Pre-PR Checklist:**
-Before opening a PR, ensure all relevant tests pass:
-1. Start local Supabase and seed: `supabase start && pnpm db:seed`
-2. Run the full test suite: `pnpm test:e2e`
-3. If adding new features, add corresponding tests
-4. Review test report for any failures: `pnpm test:report`
-
-## File Structure Highlights
-- `/src/app/q/[id]/` - Question pages (public view, admin, results)
-- `/src/app/auth/callback/page.tsx` - OAuth callback (client-side for PKCE)
-- `/src/components/LocalTime.tsx` - Client-side timestamp formatting
-- `/src/lib/supabase/` - Supabase client configs (client.ts, server.ts, middleware.ts)
-- `/supabase/schema.sql` - Complete database schema with RLS policies
-
-## Known Quirks
-- Next.js 16 shows middleware deprecation warning (can migrate to "proxy" convention later)
-- Browser autofill styling requires aggressive CSS overrides (see globals.css)
-- Google OAuth "continue to" screen shows Supabase project ID (would need custom domain to fix)
+## File Structure
+- `/src/app/page.tsx` - Home page
+- `/src/app/(main)/create/page.tsx` - Question creation form
+- `/src/app/(main)/q/[id]/page.tsx` - Question view page
+- `/src/app/(main)/q/[id]/SimpleNumberLine.tsx` - Interactive number line component
+- `/src/components/Header.tsx` - Simple header with logo and "New Question" link
+- `/src/components/CalibratedLogo.tsx` - Logo wordmark component
+- `/src/lib/supabase/client.ts` - Supabase browser client
+- `/src/lib/supabase/server.ts` - Supabase server client
