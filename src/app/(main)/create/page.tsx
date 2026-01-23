@@ -7,10 +7,15 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
-import { FaLock, FaLockOpen, FaPlus } from 'react-icons/fa'
+import { FaLock, FaLockOpen, FaPlus, FaQuestionCircle } from 'react-icons/fa'
 
 function generatePin(): string {
-  return Math.floor(100000 + Math.random() * 900000).toString()
+  // Generate 4 digit PIN where not all digits are the same
+  let pin: string
+  do {
+    pin = Math.floor(1000 + Math.random() * 9000).toString()
+  } while (new Set(pin).size === 1) // Regenerate if all digits are the same
+  return pin
 }
 
 export default function CreateSimplePage() {
@@ -137,7 +142,7 @@ export default function CreateSimplePage() {
           <label className="text-base text-muted-foreground block mb-3">Answer*</label>
           <Input
             type="number"
-            placeholder="Answer"
+            placeholder="Value"
             value={trueAnswer}
             onChange={(e) => setTrueAnswer(e.target.value)}
             className="w-32 text-center"
@@ -169,34 +174,37 @@ export default function CreateSimplePage() {
         {/* PIN and Create */}
         <div className="flex items-center gap-3 pt-2">
           <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">PIN?</span>
-            <Tooltip>
+            <Tooltip clickable>
               <TooltipTrigger asChild>
-                <button
-                  type="button"
-                  onClick={handleToggleLock}
-                  className={`p-2 rounded-md transition-colors ${
-                    useLock
-                      ? 'bg-primary/10 text-primary'
-                      : 'text-muted-foreground hover:text-foreground hover:bg-muted'
-                  }`}
-                >
-                  {useLock ? <FaLock className="h-4 w-4" /> : <FaLockOpen className="h-4 w-4" />}
-                </button>
+                <span className="text-muted-foreground cursor-help">
+                  <FaQuestionCircle className="h-4 w-4" />
+                </span>
               </TooltipTrigger>
               <TooltipContent>
-                Set a PIN to reveal the actual value
+                Set a PIN to password-protect revealing the actual value
               </TooltipContent>
             </Tooltip>
+            <span className="text-sm text-muted-foreground">PIN?</span>
+            <button
+              type="button"
+              onClick={handleToggleLock}
+              className={`p-2 rounded-md transition-colors ${
+                useLock
+                  ? 'bg-primary/10 text-primary'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+              }`}
+            >
+              {useLock ? <FaLock className="h-4 w-4" /> : <FaLockOpen className="h-4 w-4" />}
+            </button>
 
             {useLock && (
               <Input
                 type="text"
                 placeholder="PIN"
                 value={pin}
-                onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                className="w-24 text-center font-mono"
-                maxLength={6}
+                onChange={(e) => setPin(e.target.value.slice(0, 20))}
+                className="w-32 text-center font-mono"
+                maxLength={20}
               />
             )}
           </div>
