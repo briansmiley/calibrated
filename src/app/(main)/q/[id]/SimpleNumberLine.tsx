@@ -183,9 +183,6 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
     setShowPinInput(false)
   }
 
-  const handleGuessAgain = () => {
-    setJustGuessed(false)
-  }
 
   const formatValue = (value: number): string => {
     const range = question.max_value - question.min_value
@@ -340,15 +337,6 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
 
       {/* Action area */}
       <div className="text-center mt-8 space-y-4">
-        {justGuessed && !revealed && (
-          <>
-            <p className="text-muted-foreground">Guess recorded!</p>
-            <Button variant="outline" onClick={handleGuessAgain}>
-              Guess again
-            </Button>
-          </>
-        )}
-
         {!revealed && (
           <div className="flex items-center justify-center gap-2">
             {showPinInput ? (
