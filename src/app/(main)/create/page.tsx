@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { FaLock, FaLockOpen, FaPlus, FaQuestionCircle } from 'react-icons/fa'
 
@@ -107,11 +106,12 @@ export default function CreateSimplePage() {
         <div>
           <label className="text-base font-bold block mb-3">Question<span className="text-muted-foreground">*</span></label>
           <Input
+            variant="underline"
             type="text"
             placeholder="What's your question?"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="text-lg"
+            className="text-lg w-full"
           />
         </div>
 
@@ -126,11 +126,13 @@ export default function CreateSimplePage() {
             <span>Details (optional)</span>
           </button>
         ) : (
-          <Textarea
+          <Input
+            variant="underline"
+            type="text"
             placeholder="Add more context (optional)"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            rows={2}
+            className="w-full"
           />
         )}
 
@@ -138,6 +140,7 @@ export default function CreateSimplePage() {
         <div className="pt-2">
           <label className="text-base font-bold block mb-3">Answer<span className="text-muted-foreground">*</span></label>
           <Input
+            variant="underline"
             type="number"
             placeholder="Value"
             value={trueAnswer}
@@ -151,6 +154,7 @@ export default function CreateSimplePage() {
           <label className="text-base font-bold block mb-3">Range<span className="text-muted-foreground">*</span></label>
           <div className="flex items-center gap-2">
             <Input
+              variant="underline"
               type="number"
               placeholder="Min"
               value={minValue}
@@ -159,6 +163,7 @@ export default function CreateSimplePage() {
             />
             <span className="text-muted-foreground">to</span>
             <Input
+              variant="underline"
               type="number"
               placeholder="Max"
               value={maxValue}
@@ -196,6 +201,7 @@ export default function CreateSimplePage() {
 
             {useLock && (
               <Input
+                variant="underline"
                 type="text"
                 placeholder="PIN"
                 value={pin}
