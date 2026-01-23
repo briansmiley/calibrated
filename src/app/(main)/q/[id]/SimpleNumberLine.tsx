@@ -239,46 +239,64 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
             )}
 
           {/* Submitted guesses */}
-          {showGuesses && guesses.map((guess) => {
-            const isMyGuess = guess.id === myGuessId
-            const isHovered = hoveredGuessId === guess.id
-            const showDetails = revealed || isMyGuess || isHovered
-            return (
-              <div
-                key={guess.id}
-                className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2"
-                style={{ left: `${getPositionFromValue(guess.value)}%` }}
-                onMouseEnter={() => setHoveredGuessId(guess.id)}
-                onMouseLeave={() => setHoveredGuessId(null)}
-              >
-                {/* Name label above (with arrow only for own guess) */}
-                {(isMyGuess || isHovered) && (
-                  <div className="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 flex flex-col items-center">
-                    <span className="text-lg text-muted-foreground whitespace-nowrap">
-                      {guess.name || <BsIncognito className="h-5 w-5" />}
-                    </span>
-                    {isMyGuess && (
-                      <div className="w-0 h-0 border-l-[8px] border-r-[8px] border-t-[8px] border-l-transparent border-r-transparent border-t-muted-foreground" />
-                    )}
-                  </div>
-                )}
+          {showGuesses && (() => {
+            // Find closest guess to true answer when revealed
+            const closestGuessId = revealed && guesses.length > 0
+              ? guesses.reduce((closest, guess) =>
+                  Math.abs(guess.value - question.true_answer) < Math.abs(closest.value - question.true_answer)
+                    ? guess
+                    : closest
+                ).id
+              : null
+
+            return guesses.map((guess) => {
+              const isMyGuess = guess.id === myGuessId
+              const isHovered = hoveredGuessId === guess.id
+              const isClosest = guess.id === closestGuessId
+              const showDetails = revealed || isMyGuess || isHovered
+              return (
                 <div
-                  className={`rounded-full transition-all ${
-                    isMyGuess ? 'w-5 h-5' : 'w-4 h-4'
-                  } ${
-                    revealed
-                      ? 'bg-zinc-400'
-                      : 'bg-zinc-600'
-                  }`}
-                />
-                {showDetails && (
-                  <div className="absolute top-full mt-1 left-1/2 -translate-x-1/2 text-lg text-muted-foreground whitespace-nowrap">
-                    {formatValue(guess.value)}
-                  </div>
-                )}
-              </div>
-            )
-          })}
+                  key={guess.id}
+                  className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2"
+                  style={{ left: `${getPositionFromValue(guess.value)}%` }}
+                  onMouseEnter={() => setHoveredGuessId(guess.id)}
+                  onMouseLeave={() => setHoveredGuessId(null)}
+                >
+                  {/* Name label above (with arrow only for own guess) */}
+                  {(isMyGuess || isHovered || isClosest) && (
+                    <div className="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 flex flex-col items-center">
+                      <span className={`text-lg whitespace-nowrap ${isClosest ? 'text-white font-medium' : 'text-muted-foreground'}`}>
+                        {guess.name || <BsIncognito className="h-5 w-5" />}
+                      </span>
+                      {isMyGuess && (
+                        <div className="w-0 h-0 border-l-[8px] border-r-[8px] border-t-[8px] border-l-transparent border-r-transparent border-t-muted-foreground" />
+                      )}
+                    </div>
+                  )}
+                  {isClosest ? (
+                    // Winner: white diamond
+                    <div className="w-4 h-4 bg-white rotate-45 shadow-lg shadow-white/30 ring-2 ring-white/50" />
+                  ) : (
+                    // Regular guess: circle
+                    <div
+                      className={`rounded-full transition-all ${
+                        isMyGuess ? 'w-5 h-5' : 'w-4 h-4'
+                      } ${
+                        revealed
+                          ? 'bg-zinc-400'
+                          : 'bg-zinc-600'
+                      }`}
+                    />
+                  )}
+                  {(showDetails || isClosest) && (
+                    <div className={`absolute top-full mt-1 left-1/2 -translate-x-1/2 text-lg whitespace-nowrap ${isClosest ? 'text-white font-medium' : 'text-muted-foreground'}`}>
+                      {formatValue(guess.value)}
+                    </div>
+                  )}
+                </div>
+              )
+            })
+          })()}
 
           {/* True answer (only after user guesses, if revealed) */}
           {revealed && justGuessed && (
@@ -412,11 +430,27 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
           </div>
         )}
 
-        {revealed && justGuessed && (
-          <p className="text-green-500 font-medium">
-            Answer: {formatValue(question.true_answer)}
-          </p>
-        )}
+        {revealed && justGuessed && (() => {
+          const closestGuess = guesses.length > 0
+            ? guesses.reduce((closest, guess) =>
+                Math.abs(guess.value - question.true_answer) < Math.abs(closest.value - question.true_answer)
+                  ? guess
+                  : closest
+              )
+            : null
+          return (
+            <div className="space-y-1">
+              <p className="text-green-500 font-medium">
+                Answer: {formatWithCommas(question.true_answer)}
+              </p>
+              {closestGuess && (
+                <p className="text-white font-medium">
+                  Closest: {closestGuess.name || 'Anonymous'} ({formatWithCommas(closestGuess.value)})
+                </p>
+              )}
+            </div>
+          )
+        })()}
       </div>
     </div>
   )
