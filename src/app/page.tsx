@@ -5,7 +5,7 @@ export default function Home() {
   return (
     <div className="flex flex-col items-center justify-center min-h-[100dvh] px-4">
       <h1 className="text-foreground text-center">
-        <CalibratedLogo size="lg" />
+        <CalibratedLogo size="lg" animate />
       </h1>
       <p className="mt-4 text-xl text-muted-foreground text-center italic">
         Take a guess
