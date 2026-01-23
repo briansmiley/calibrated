@@ -105,22 +105,19 @@ export default function CreateSimplePage() {
   return (
     <div className="mx-auto max-w-xl py-12 px-4">
       <div className="text-center mb-8">
-        <h1 className="text-2xl font-bold">Create Question</h1>
+        <h1 className="text-2xl font-bold">Pose Question</h1>
       </div>
 
       <div className="space-y-4">
         {/* Question title */}
-        <div>
-          <label className="text-base font-bold block mb-3">Question<span className="text-muted-foreground">*</span></label>
-          <Input
-            variant="underline"
-            type="text"
-            placeholder="What's your question?"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className="text-lg w-full"
-          />
-        </div>
+        <Input
+          variant="underline"
+          type="text"
+          placeholder="Question *"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          className="text-lg w-full"
+        />
 
         {/* Description toggle/field */}
         {!showDescription ? (
@@ -136,7 +133,7 @@ export default function CreateSimplePage() {
           <Input
             variant="underline"
             type="text"
-            placeholder="Add more context (optional)"
+            placeholder="Details (optional)"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             className="w-full"
@@ -144,40 +141,34 @@ export default function CreateSimplePage() {
         )}
 
         {/* Answer */}
-        <div className="pt-2">
-          <label className="text-base font-bold block mb-3">Answer<span className="text-muted-foreground">*</span></label>
+        <Input
+          variant="underline"
+          type="number"
+          placeholder="Answer *"
+          value={trueAnswer}
+          onChange={(e) => setTrueAnswer(e.target.value)}
+          className="w-32"
+        />
+
+        {/* Guess Range */}
+        <div className="flex items-center gap-2">
           <Input
             variant="underline"
             type="number"
-            placeholder="Value"
-            value={trueAnswer}
-            onChange={(e) => setTrueAnswer(e.target.value)}
-            className="w-32 text-center"
+            placeholder="Min *"
+            value={minValue}
+            onChange={(e) => setMinValue(e.target.value)}
+            className="w-24 text-center"
           />
-        </div>
-
-        {/* Guess Range */}
-        <div className="pt-2">
-          <label className="text-base font-bold block mb-3">Range<span className="text-muted-foreground">*</span></label>
-          <div className="flex items-center gap-2">
-            <Input
-              variant="underline"
-              type="number"
-              placeholder="Min"
-              value={minValue}
-              onChange={(e) => setMinValue(e.target.value)}
-              className="w-24 text-center"
-            />
-            <span className="text-muted-foreground">to</span>
-            <Input
-              variant="underline"
-              type="number"
-              placeholder="Max"
-              value={maxValue}
-              onChange={(e) => setMaxValue(e.target.value)}
-              className="w-24 text-center"
-            />
-          </div>
+          <span className="text-muted-foreground">to</span>
+          <Input
+            variant="underline"
+            type="number"
+            placeholder="Max *"
+            value={maxValue}
+            onChange={(e) => setMaxValue(e.target.value)}
+            className="w-24 text-center"
+          />
         </div>
 
         {/* PIN and Create */}
