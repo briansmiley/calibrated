@@ -103,6 +103,7 @@ export default function CreateSimplePage() {
       <div className="space-y-4">
         {/* Question title */}
         <div>
+          <label className="text-base text-muted-foreground block mb-3">Question*</label>
           <Input
             type="text"
             placeholder="What's your question?"
@@ -120,7 +121,7 @@ export default function CreateSimplePage() {
             className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
             <FaPlus className="h-3 w-3" />
-            <span>Details</span>
+            <span>Details (optional)</span>
           </button>
         ) : (
           <Textarea
@@ -131,36 +132,35 @@ export default function CreateSimplePage() {
           />
         )}
 
-        {/* Range and Value */}
-        <div className="flex flex-col sm:flex-row items-end gap-4 pt-2">
-          <div className="space-y-1">
-            <label className="text-xs text-muted-foreground">Guessable range</label>
-            <div className="flex items-center gap-2">
-              <Input
-                type="number"
-                placeholder="Min"
-                value={minValue}
-                onChange={(e) => setMinValue(e.target.value)}
-                className="w-24 text-center"
-              />
-              <span className="text-muted-foreground">to</span>
-              <Input
-                type="number"
-                placeholder="Max"
-                value={maxValue}
-                onChange={(e) => setMaxValue(e.target.value)}
-                className="w-24 text-center"
-              />
-            </div>
-          </div>
+        {/* Answer */}
+        <div className="pt-2">
+          <label className="text-base text-muted-foreground block mb-3">Answer*</label>
+          <Input
+            type="number"
+            placeholder="Answer"
+            value={trueAnswer}
+            onChange={(e) => setTrueAnswer(e.target.value)}
+            className="w-32 text-center"
+          />
+        </div>
 
-          <div className="space-y-1">
-            <label className="text-xs text-muted-foreground">Value</label>
+        {/* Guess Range */}
+        <div className="pt-2">
+          <label className="text-base text-muted-foreground block mb-3">Guess Range*</label>
+          <div className="flex items-center gap-2">
             <Input
               type="number"
-              placeholder="Answer"
-              value={trueAnswer}
-              onChange={(e) => setTrueAnswer(e.target.value)}
+              placeholder="Min"
+              value={minValue}
+              onChange={(e) => setMinValue(e.target.value)}
+              className="w-24 text-center"
+            />
+            <span className="text-muted-foreground">to</span>
+            <Input
+              type="number"
+              placeholder="Max"
+              value={maxValue}
+              onChange={(e) => setMaxValue(e.target.value)}
               className="w-24 text-center"
             />
           </div>

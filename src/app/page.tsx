@@ -3,7 +3,7 @@ import { CalibratedLogo } from '@/components/CalibratedLogo'
 
 export default function Home() {
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen px-4">
+    <div className="flex flex-col items-center justify-center min-h-[100dvh] px-4">
       <h1 className="text-foreground text-center">
         <CalibratedLogo size="lg" />
       </h1>
