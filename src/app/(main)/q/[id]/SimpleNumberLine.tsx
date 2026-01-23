@@ -279,8 +279,18 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
 
         {/* Range labels */}
         <div className="flex justify-between text-sm text-muted-foreground mt-2">
-          <span>{formatValue(question.min_value)}</span>
-          <span>{formatValue(question.max_value)}</span>
+          <Tooltip clickable>
+            <TooltipTrigger asChild>
+              <span>{formatValue(question.min_value)}</span>
+            </TooltipTrigger>
+            <TooltipContent>{formatWithCommas(question.min_value)}</TooltipContent>
+          </Tooltip>
+          <Tooltip clickable>
+            <TooltipTrigger asChild>
+              <span>{formatValue(question.max_value)}</span>
+            </TooltipTrigger>
+            <TooltipContent>{formatWithCommas(question.max_value)}</TooltipContent>
+          </Tooltip>
         </div>
 
         {/* Guess input - always visible when not revealed */}
