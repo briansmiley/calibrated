@@ -33,8 +33,8 @@ function LogoIcon({ className }: { className?: string }) {
 
 // Animated version - single stem grows from center, then caps spread
 function AnimatedLogoIcon({ className, delay = 0 }: { className?: string; delay?: number }) {
-  const stemDelay = delay + 0.1
-  const capDelay = delay + 0.45
+  const stemDelay = delay + 0.4
+  const capDelay = delay + 0.75
 
   return (
     <svg
