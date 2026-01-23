@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { FaLock, FaCheck } from 'react-icons/fa'
+import { formatWithCommas, parseWithCommas } from '@/lib/format'
 
 interface Props {
   question: SimpleQuestion
@@ -123,18 +124,18 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
   const handleClick = (e: React.MouseEvent) => {
     if (revealed || justGuessed) return
     const value = getValueFromPosition(e.clientX)
-    setLockedInValue(String(value))
+    setLockedInValue(formatWithCommas(value))
   }
 
   const handleInputSubmit = async () => {
-    const value = parseFloat(lockedInValue)
+    const value = parseWithCommas(lockedInValue)
     if (!isNaN(value)) {
       await submitGuess(value)
     }
   }
 
-  // Parse locked-in value
-  const parsedLockedIn = lockedInValue !== '' ? parseFloat(lockedInValue) : null
+  // Parse locked-in value (strip commas for validation)
+  const parsedLockedIn = lockedInValue !== '' ? parseWithCommas(lockedInValue) : null
   const isLockedInValid = parsedLockedIn !== null && !isNaN(parsedLockedIn)
   const isInRange = isLockedInValid && parsedLockedIn >= question.min_value && parsedLockedIn <= question.max_value
 
@@ -275,8 +276,9 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
         {!revealed && !justGuessed && (
           <div className="flex items-center justify-center gap-3 mt-4">
             <input
-              type="number"
-              value={hoverValue !== null ? hoverValue : lockedInValue}
+              type="text"
+              inputMode="decimal"
+              value={hoverValue !== null ? formatWithCommas(hoverValue) : lockedInValue}
               onChange={(e) => setLockedInValue(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleInputSubmit()}
               placeholder="—"
