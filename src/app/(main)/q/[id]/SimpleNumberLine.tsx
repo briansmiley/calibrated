@@ -6,7 +6,7 @@ import { SimpleQuestion, SimpleGuess } from '@/types/database'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
-import { FaLock, FaCheck, FaPlus } from 'react-icons/fa'
+import { FaLock, FaCheck, FaPlus, FaLink } from 'react-icons/fa'
 import { BsIncognito } from 'react-icons/bs'
 import { formatWithCommas } from '@/lib/format'
 
@@ -33,8 +33,15 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
   const [nameInput, setNameInput] = useState('')
   const [hoveredGuessId, setHoveredGuessId] = useState<string | null>(null)
   const [answerHovered, setAnswerHovered] = useState(false)
+  const [linkCopied, setLinkCopied] = useState(false)
 
   const hasPin = question.reveal_pin !== null
+
+  const handleCopyLink = async () => {
+    await navigator.clipboard.writeText(window.location.href)
+    setLinkCopied(true)
+    setTimeout(() => setLinkCopied(false), 1500)
+  }
 
   // Subscribe to realtime updates
   useEffect(() => {
@@ -212,7 +219,20 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
     <div className="mx-auto max-w-4xl py-8 px-4">
       {/* Question title and description */}
       <div className="text-center mb-6">
-        <h1 className="text-3xl font-bold">{question.title}</h1>
+        <div className="flex items-center justify-center gap-2">
+          <h1 className="text-3xl font-bold">{question.title}</h1>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={handleCopyLink}
+                className="p-1.5 text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <FaLink className="h-4 w-4" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>{linkCopied ? 'Copied!' : 'Copy link'}</TooltipContent>
+          </Tooltip>
+        </div>
         {question.description && (
           <p className="text-muted-foreground mt-2">{question.description}</p>
         )}
