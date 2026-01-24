@@ -70,8 +70,8 @@ export async function POST(request: Request) {
 
     const url = `${APP_URL}/q/${result.data.shortId}`
 
-    // Build response message
-    const lines = [`**${options.question}**`]
+    // Build response message - question title is a link
+    const lines = [`[**${options.question}**](${url})`]
     if (options.description) {
       lines.push('', `Details: ${options.description}`)
     }
@@ -86,7 +86,6 @@ export async function POST(request: Request) {
       rangeText = `${options.min} – ${options.max}`
     }
     lines.push('', `Range: ${rangeText}`)
-    lines.push('', `[Guess Here](${url})`)
 
     return Response.json({
       type: CHANNEL_MESSAGE,
@@ -145,49 +144,32 @@ export async function POST(request: Request) {
       // Modal title (45 char limit) - truncate question if needed
       const modalTitle = q.title.length > 45 ? q.title.slice(0, 42) + '...' : q.title
 
-      // Build components - question details as paragraph input (read-only feel via placeholder)
-      const components = []
-
-      // Show question + details as a "paragraph" field they can't really edit
-      const detailsText = q.description ? `${q.title}\n\nDetails: ${q.description}` : q.title
-      components.push({
-        type: 1,
-        components: [{
-          type: 4,
-          custom_id: "question_display",
-          label: "Question",
-          style: 2, // Paragraph
-          required: false,
-          value: detailsText,
-          max_length: 1000
-        }]
-      })
-
-      // Guess input with range in label
-      components.push({
-        type: 1,
-        components: [{
-          type: 4,
-          custom_id: "guess_value",
-          label: `Your Guess (${rangeText})`,
-          style: 1,
-          required: true,
-          placeholder: "Enter a number"
-        }]
-      })
-
-      // Name input
-      components.push({
-        type: 1,
-        components: [{
-          type: 4,
-          custom_id: "guess_name",
-          label: "Name",
-          style: 1,
-          required: false,
-          value: displayName
-        }]
-      })
+      const components = [
+        // Guess input with range in label
+        {
+          type: 1,
+          components: [{
+            type: 4,
+            custom_id: "guess_value",
+            label: `Your Guess (${rangeText})`,
+            style: 1,
+            required: true,
+            placeholder: "Enter a number"
+          }]
+        },
+        // Name input
+        {
+          type: 1,
+          components: [{
+            type: 4,
+            custom_id: "guess_name",
+            label: "Name",
+            style: 1,
+            required: false,
+            value: displayName
+          }]
+        }
+      ]
 
       return Response.json({
         type: MODAL,
