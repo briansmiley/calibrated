@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { FaLock, FaLockOpen, FaPlus, FaQuestionCircle, FaRegCopy } from 'react-icons/fa'
 
@@ -24,6 +25,7 @@ export default function CreateSimplePage() {
   const [title, setTitle] = useState('')
   const [showDescription, setShowDescription] = useState(false)
   const [description, setDescription] = useState('')
+  const [showUnits, setShowUnits] = useState(false)
   const [minValue, setMinValue] = useState('')
   const [maxValue, setMaxValue] = useState('')
   const [trueAnswer, setTrueAnswer] = useState('')
@@ -144,34 +146,46 @@ export default function CreateSimplePage() {
           />
         )}
 
-        {/* Answer with optional unit */}
-        <div className="flex items-center gap-3">
-          <Input
-            variant="underline"
-            type="number"
-            placeholder="Answer *"
-            value={trueAnswer}
-            onChange={(e) => setTrueAnswer(e.target.value)}
-            className="w-32"
-          />
-          <Input
-            variant="underline"
-            type="text"
-            placeholder="Unit"
-            value={unit}
-            onChange={(e) => setUnit(e.target.value)}
-            className="w-24"
-          />
-          <label className="flex items-center gap-1.5 text-sm text-muted-foreground cursor-pointer select-none">
-            <input
-              type="checkbox"
-              checked={isCurrency}
-              onChange={(e) => setIsCurrency(e.target.checked)}
-              className="rounded"
+        {/* Answer */}
+        <Input
+          variant="underline"
+          type="number"
+          placeholder="Answer *"
+          value={trueAnswer}
+          onChange={(e) => setTrueAnswer(e.target.value)}
+          className="w-32"
+        />
+
+        {/* Units toggle/field */}
+        {!showUnits ? (
+          <button
+            type="button"
+            onClick={() => setShowUnits(true)}
+            className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <FaPlus className="h-3 w-3" />
+            <span>Units (optional)</span>
+          </button>
+        ) : (
+          <div className="flex items-center gap-3">
+            <Input
+              variant="underline"
+              type="text"
+              placeholder="Unit (e.g. kg, miles)"
+              value={unit}
+              onChange={(e) => setUnit(e.target.value)}
+              className="w-40"
             />
-            <span>Currency?</span>
-          </label>
-        </div>
+            <label className="flex items-center gap-1.5 text-sm text-muted-foreground cursor-pointer select-none">
+              <Checkbox
+                checked={isCurrency}
+                onCheckedChange={(checked) => setIsCurrency(checked === true)}
+                className="border-zinc-600 data-[state=checked]:bg-zinc-700 data-[state=checked]:border-zinc-600"
+              />
+              <span>Currency?</span>
+            </label>
+          </div>
+        )}
 
         {/* Guess Range */}
         <div className="flex items-center gap-2">
