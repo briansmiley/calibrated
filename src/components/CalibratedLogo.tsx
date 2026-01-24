@@ -1,3 +1,7 @@
+'use client'
+
+import { useState, useEffect } from 'react'
+
 interface CalibratedLogoProps {
   size?: 'sm' | 'lg'
   className?: string
@@ -29,9 +33,30 @@ function LogoIcon({ className }: { className?: string }) {
 }
 
 // Animated version - single stem grows from center, then caps spread
+// Uses requestAnimationFrame for delay so animation pauses when tab is inactive
 function AnimatedLogoIcon({ className, delay = 0 }: { className?: string; delay?: number }) {
-  const stemDelay = delay + 0.4
-  const capDelay = delay + 0.75
+  const [ready, setReady] = useState(false)
+
+  useEffect(() => {
+    const start = performance.now()
+    const delayMs = delay * 1000
+    let frameId: number
+
+    const tick = () => {
+      if (performance.now() - start >= delayMs) {
+        setReady(true)
+      } else {
+        frameId = requestAnimationFrame(tick)
+      }
+    }
+
+    frameId = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(frameId)
+  }, [delay])
+
+  // Animation timing (relative to when ready becomes true)
+  const stemDelay = 0.4
+  const capDelay = 0.75
 
   return (
     <svg
@@ -41,12 +66,12 @@ function AnimatedLogoIcon({ className, delay = 0 }: { className?: string; delay?
     >
       <style>{`
         @keyframes expand { to { transform: scale(1) } }
-        .stem {
+        .stem-anim {
           transform: scaleY(0);
           transform-origin: 16px 16px;
           animation: expand 0.4s ease-out ${stemDelay}s forwards;
         }
-        .cap {
+        .cap-anim {
           transform: scaleX(0);
           animation: expand 0.3s ease-out ${capDelay}s forwards;
         }
@@ -58,11 +83,26 @@ function AnimatedLogoIcon({ className, delay = 0 }: { className?: string; delay?
       <rect x="8" y="9" width="16" height="14" rx="2" fill="#22c55e"/>
 
       {/* Stem - grows from center outward vertically, drawn on top of box */}
-      <line className="stem" x1="16" y1="4" x2="16" y2="28" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/>
+      <line
+        className={ready ? 'stem-anim' : ''}
+        x1="16" y1="4" x2="16" y2="28"
+        stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"
+        style={ready ? undefined : { transform: 'scaleY(0)', transformOrigin: '16px 16px' }}
+      />
 
       {/* Caps - expand from center horizontally */}
-      <line className="cap cap-top" x1="11" y1="4" x2="21" y2="4" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/>
-      <line className="cap cap-bottom" x1="11" y1="28" x2="21" y2="28" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/>
+      <line
+        className={ready ? 'cap-anim cap-top' : 'cap-top'}
+        x1="11" y1="4" x2="21" y2="4"
+        stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"
+        style={ready ? undefined : { transform: 'scaleX(0)' }}
+      />
+      <line
+        className={ready ? 'cap-anim cap-bottom' : 'cap-bottom'}
+        x1="11" y1="28" x2="21" y2="28"
+        stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"
+        style={ready ? undefined : { transform: 'scaleX(0)' }}
+      />
     </svg>
   )
 }
