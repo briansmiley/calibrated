@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { FaLock, FaCheck, FaPlus } from 'react-icons/fa'
+import { IoIosLink } from 'react-icons/io'
 import { BsIncognito } from 'react-icons/bs'
 import { formatWithCommas } from '@/lib/format'
 
@@ -33,8 +34,15 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
   const [nameInput, setNameInput] = useState('')
   const [hoveredGuessId, setHoveredGuessId] = useState<string | null>(null)
   const [answerHovered, setAnswerHovered] = useState(false)
+  const [linkCopied, setLinkCopied] = useState(false)
 
   const hasPin = question.reveal_pin !== null
+
+  const handleCopyLink = async () => {
+    await navigator.clipboard.writeText(window.location.href)
+    setLinkCopied(true)
+    setTimeout(() => setLinkCopied(false), 1500)
+  }
 
   // Subscribe to realtime updates
   useEffect(() => {
@@ -216,6 +224,17 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
         {question.description && (
           <p className="text-muted-foreground mt-2">{question.description}</p>
         )}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              onClick={handleCopyLink}
+              className="mt-2 p-1.5 text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <IoIosLink className="h-5 w-5" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent>{linkCopied ? 'Copied!' : 'Copy link'}</TooltipContent>
+        </Tooltip>
       </div>
 
       {/* Number line container */}
