@@ -11,6 +11,8 @@ export type CreateQuestionInput = {
   minValue: number
   maxValue: number
   trueAnswer: number
+  unit?: string
+  isCurrency?: boolean
   revealPin?: string
 }
 
@@ -31,6 +33,8 @@ export type GetQuestionResult =
           maxValue: number
           revealed: boolean
           trueAnswer: number | null // Only included if revealed
+          unit: string | null
+          isCurrency: boolean
           hasPin: boolean
           createdAt: string | null
         }
@@ -137,6 +141,8 @@ export async function createQuestion(
       min_value: input.minValue,
       max_value: input.maxValue,
       true_answer: input.trueAnswer,
+      unit: input.unit?.trim() || null,
+      is_currency: input.isCurrency ?? false,
       reveal_pin: input.revealPin || null,
     })
     .select()
@@ -188,6 +194,8 @@ export async function getQuestion(questionId: string): Promise<GetQuestionResult
         maxValue: question.max_value,
         revealed: question.revealed,
         trueAnswer: question.revealed ? question.true_answer : null,
+        unit: question.unit,
+        isCurrency: question.is_currency,
         hasPin: question.reveal_pin !== null,
         createdAt: question.created_at,
       },

@@ -201,6 +201,13 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
     return value.toLocaleString()
   }
 
+  const formatValueWithUnit = (value: number): string => {
+    const formatted = formatValue(value)
+    if (!question.unit) return formatted
+    if (question.is_currency) return `${question.unit}${formatted}`
+    return `${formatted} ${question.unit}`
+  }
+
   return (
     <div className="mx-auto max-w-4xl py-8 px-4">
       {/* Question title and description */}
@@ -324,13 +331,13 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
         <div className="flex justify-between text-xl text-muted-foreground mt-2">
           <Tooltip clickable>
             <TooltipTrigger asChild>
-              <span>{formatValue(question.min_value)}</span>
+              <span>{formatValueWithUnit(question.min_value)}</span>
             </TooltipTrigger>
             <TooltipContent>{formatWithCommas(question.min_value)}</TooltipContent>
           </Tooltip>
           <Tooltip clickable>
             <TooltipTrigger asChild>
-              <span>{formatValue(question.max_value)}</span>
+              <span>{formatValueWithUnit(question.max_value)}</span>
             </TooltipTrigger>
             <TooltipContent>{formatWithCommas(question.max_value)}</TooltipContent>
           </Tooltip>

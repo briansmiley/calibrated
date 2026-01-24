@@ -27,6 +27,8 @@ export default function CreateSimplePage() {
   const [minValue, setMinValue] = useState('')
   const [maxValue, setMaxValue] = useState('')
   const [trueAnswer, setTrueAnswer] = useState('')
+  const [unit, setUnit] = useState('')
+  const [isCurrency, setIsCurrency] = useState(false)
   const [useLock, setUseLock] = useState(false)
   const [pin, setPin] = useState('')
   const [loading, setLoading] = useState(false)
@@ -85,6 +87,8 @@ export default function CreateSimplePage() {
         min_value: min,
         max_value: max,
         true_answer: answer,
+        unit: unit.trim() || null,
+        is_currency: isCurrency,
         reveal_pin: useLock && pin ? pin : null,
       })
       .select()
@@ -140,15 +144,34 @@ export default function CreateSimplePage() {
           />
         )}
 
-        {/* Answer */}
-        <Input
-          variant="underline"
-          type="number"
-          placeholder="Answer *"
-          value={trueAnswer}
-          onChange={(e) => setTrueAnswer(e.target.value)}
-          className="w-32"
-        />
+        {/* Answer with optional unit */}
+        <div className="flex items-center gap-3">
+          <Input
+            variant="underline"
+            type="number"
+            placeholder="Answer *"
+            value={trueAnswer}
+            onChange={(e) => setTrueAnswer(e.target.value)}
+            className="w-32"
+          />
+          <Input
+            variant="underline"
+            type="text"
+            placeholder="Unit"
+            value={unit}
+            onChange={(e) => setUnit(e.target.value)}
+            className="w-24"
+          />
+          <label className="flex items-center gap-1.5 text-sm text-muted-foreground cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={isCurrency}
+              onChange={(e) => setIsCurrency(e.target.checked)}
+              className="rounded"
+            />
+            <span>Currency?</span>
+          </label>
+        </div>
 
         {/* Guess Range */}
         <div className="flex items-center gap-2">
