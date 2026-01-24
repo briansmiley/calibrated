@@ -163,7 +163,7 @@ export async function POST(request: Request) {
           components: [{
             type: 4,
             custom_id: "guess_name",
-            label: "Name",
+            label: "Name (optional)",
             style: 1,
             required: false,
             value: displayName
