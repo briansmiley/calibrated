@@ -47,6 +47,8 @@ export async function POST(request: Request) {
       maxValue: options.max as number,
       trueAnswer: options.answer as number,
       revealPin: options.pin as string | undefined,
+      unit: options.unit as string | undefined,
+      isCurrency: options.currency as boolean | undefined,
     })
 
     if (!result.success) {
