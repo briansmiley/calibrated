@@ -1,5 +1,5 @@
 import { verifyKey } from 'discord-interactions'
-import { createQuestion, submitGuess } from '@/lib/services/questions'
+import { createQuestion, getQuestion, submitGuess } from '@/lib/services/questions'
 
 const DISCORD_PUBLIC_KEY = process.env.DISCORD_PUBLIC_KEY!
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://calibrated.vercel.app'
@@ -112,39 +112,89 @@ export async function POST(request: Request) {
     if (customId.startsWith('guess_')) {
       const questionId = customId.replace('guess_', '')
 
+      // Fetch question details
+      const questionResult = await getQuestion(questionId)
+      if (!questionResult.success) {
+        return Response.json({
+          type: CHANNEL_MESSAGE,
+          data: {
+            content: "❌ Question not found",
+            flags: EPHEMERAL
+          }
+        })
+      }
+
+      const q = questionResult.data.question
+
       // Get user's display name
       const displayName = interaction.member?.nick
         || interaction.member?.user?.global_name
         || interaction.member?.user?.username
         || ''
 
-      // Respond with modal
+      // Format range with units
+      let rangeText: string
+      if (q.unit && q.isCurrency) {
+        rangeText = `${q.unit}${q.minValue} – ${q.unit}${q.maxValue}`
+      } else if (q.unit) {
+        rangeText = `${q.minValue} – ${q.maxValue} ${q.unit}`
+      } else {
+        rangeText = `${q.minValue} – ${q.maxValue}`
+      }
+
+      // Modal title (45 char limit) - truncate question if needed
+      const modalTitle = q.title.length > 45 ? q.title.slice(0, 42) + '...' : q.title
+
+      // Build components - question details as paragraph input (read-only feel via placeholder)
+      const components = []
+
+      // Show question + details as a "paragraph" field they can't really edit
+      const detailsText = q.description ? `${q.title}\n\nDetails: ${q.description}` : q.title
+      components.push({
+        type: 1,
+        components: [{
+          type: 4,
+          custom_id: "question_display",
+          label: "Question",
+          style: 2, // Paragraph
+          required: false,
+          value: detailsText,
+          max_length: 1000
+        }]
+      })
+
+      // Guess input with range in label
+      components.push({
+        type: 1,
+        components: [{
+          type: 4,
+          custom_id: "guess_value",
+          label: `Your Guess (${rangeText})`,
+          style: 1,
+          required: true,
+          placeholder: "Enter a number"
+        }]
+      })
+
+      // Name input
+      components.push({
+        type: 1,
+        components: [{
+          type: 4,
+          custom_id: "guess_name",
+          label: "Name",
+          style: 1,
+          required: false,
+          value: displayName
+        }]
+      })
+
       return Response.json({
         type: MODAL,
         data: {
           custom_id: `submit_${questionId}`,
-          title: "Submit Your Guess",
-          components: [{
-            type: 1,
-            components: [{
-              type: 4, // Text input
-              custom_id: "guess_value",
-              label: "Your Guess",
-              style: 1, // Short
-              required: true,
-              placeholder: "Enter a number"
-            }]
-          }, {
-            type: 1,
-            components: [{
-              type: 4,
-              custom_id: "guess_name",
-              label: "Name",
-              style: 1,
-              required: false,
-              value: displayName
-            }]
-          }]
+          title: modalTitle,
+          components
         }
       })
     }
