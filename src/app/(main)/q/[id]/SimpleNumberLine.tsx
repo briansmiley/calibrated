@@ -32,6 +32,7 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
   const [showNameInput, setShowNameInput] = useState(false)
   const [nameInput, setNameInput] = useState('')
   const [hoveredGuessId, setHoveredGuessId] = useState<string | null>(null)
+  const [isDragging, setIsDragging] = useState(false)
   const [answerHovered, setAnswerHovered] = useState(false)
 
   const hasPin = question.reveal_pin !== null
@@ -97,15 +98,46 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
   }
 
 
-  const handleMouseMove = (e: React.MouseEvent) => {
+  const handlePointerDown = (e: React.PointerEvent) => {
     if (justGuessed) return
+    e.preventDefault()
+    setIsDragging(true)
     const value = getValueFromPosition(e.clientX)
-    setHoverValue(value)
-  }
-
-  const handleMouseLeave = () => {
+    setLockedInNumber(value)
     setHoverValue(null)
   }
+
+  const handlePointerMove = (e: React.PointerEvent) => {
+    if (justGuessed) return
+    const value = getValueFromPosition(e.clientX)
+    if (isDragging) {
+      setLockedInNumber(value)
+    } else {
+      setHoverValue(value)
+    }
+  }
+
+  const handlePointerUp = () => {
+    setIsDragging(false)
+  }
+
+  const handlePointerLeave = () => {
+    if (!isDragging) {
+      setHoverValue(null)
+    }
+  }
+
+  // Global pointer up handler for when user releases outside the line
+  useEffect(() => {
+    const handleGlobalPointerUp = () => {
+      setIsDragging(false)
+    }
+
+    if (isDragging) {
+      window.addEventListener('pointerup', handleGlobalPointerUp)
+      return () => window.removeEventListener('pointerup', handleGlobalPointerUp)
+    }
+  }, [isDragging])
 
   const submitGuess = async (value: number) => {
     if (justGuessed) return
@@ -131,12 +163,6 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
       setNameInput('')
       setShowNameInput(false)
     }
-  }
-
-  const handleClick = (e: React.MouseEvent) => {
-    if (justGuessed) return
-    const value = getValueFromPosition(e.clientX)
-    setLockedInNumber(value)
   }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -224,10 +250,11 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
           {/* Interactive dot area - tiny inset to center dots on end caps */}
           <div
             ref={lineRef}
-            className={`absolute inset-y-0 left-0.5 right-0.5 ${!justGuessed ? 'cursor-crosshair' : ''}`}
-            onMouseMove={handleMouseMove}
-            onMouseLeave={handleMouseLeave}
-            onClick={handleClick}
+            className={`absolute inset-y-0 left-0.5 right-0.5 ${!justGuessed ? 'cursor-crosshair' : ''} touch-none`}
+            onPointerDown={handlePointerDown}
+            onPointerMove={handlePointerMove}
+            onPointerUp={handlePointerUp}
+            onPointerLeave={handlePointerLeave}
           >
             {/* Ghost dot - shows for hover or typed input */}
             {ghostValue !== null && !isNaN(ghostValue) && ghostValue >= question.min_value && ghostValue <= question.max_value && !justGuessed && (
