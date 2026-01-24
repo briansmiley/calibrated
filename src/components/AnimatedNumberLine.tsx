@@ -136,7 +136,7 @@ export function AnimatedNumberLine() {
               return (
                 <div
                   key={`${cycleKey}-${i}`}
-                  className={`absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full transition-colors duration-300 ${isWinner ? 'bg-white' : 'bg-zinc-500'}`}
+                  className={`absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full transition-colors duration-300 ${isWinner ? 'bg-white z-10' : 'bg-zinc-500'}`}
                   style={{
                     left: `${pos}%`,
                     transform: 'scale(0)',
@@ -150,7 +150,7 @@ export function AnimatedNumberLine() {
 
             <div
               key={`diamond-${cycleKey}`}
-              className="absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-green-500 shadow-lg shadow-green-500/30 ring-2 ring-green-400/50"
+              className="absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-green-500 shadow-lg shadow-green-500/30 ring-2 ring-green-400/50 z-20"
               style={{
                 left: `${data.diamondPosition}%`,
                 transform: 'translateX(-50%) scale(0) rotate(45deg)',
