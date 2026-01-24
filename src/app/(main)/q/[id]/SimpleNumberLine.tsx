@@ -368,9 +368,9 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
                   <button
                     onClick={handleInputSubmit}
                     disabled={!isInputValid}
-                    className="p-2 rounded-full bg-zinc-300 text-zinc-800 hover:bg-zinc-400 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                    className="px-4 py-1.5 rounded-lg bg-transparent border border-zinc-500 text-zinc-300 hover:bg-zinc-800 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                   >
-                    <FaCheck className="h-4 w-4" />
+                    Guess
                   </button>
                 </span>
               </TooltipTrigger>
