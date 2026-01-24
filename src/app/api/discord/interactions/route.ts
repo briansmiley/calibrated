@@ -68,7 +68,17 @@ export async function POST(request: Request) {
     if (options.description) {
       lines.push('', `Details: ${options.description}`)
     }
-    lines.push('', `Range: ${options.min} – ${options.max}`)
+
+    // Format range with units
+    let rangeText: string
+    if (options.unit && options.currency) {
+      rangeText = `${options.unit}${options.min} – ${options.unit}${options.max}`
+    } else if (options.unit) {
+      rangeText = `${options.min} – ${options.max} ${options.unit}`
+    } else {
+      rangeText = `${options.min} – ${options.max}`
+    }
+    lines.push('', `Range: ${rangeText}`)
     lines.push('', `[Guess Here](${url})`)
 
     return Response.json({
