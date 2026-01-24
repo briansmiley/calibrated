@@ -85,6 +85,20 @@ export function AnimatedNumberLine() {
     }
   }, [data, cycleTime, startNewCycle])
 
+  // Find the closest dot to the diamond
+  const closestDotIndex = data
+    ? data.dotPositions.reduce(
+        (closest, pos, i) =>
+          Math.abs(pos - data.diamondPosition) < Math.abs(data.dotPositions[closest] - data.diamondPosition)
+            ? i
+            : closest,
+        0
+      )
+    : -1
+
+  // Timing for winner highlight (0.2s after diamond finishes animating in)
+  const winnerDelay = LINE_DURATION + DOT_START_DELAY + DOT_COUNT * DOT_INTERVAL + DIAMOND_DELAY + DIAMOND_ANIM_DURATION + 0.2
+
   return (
     <div className="mt-12 w-full max-w-md">
       <style>{`
@@ -93,6 +107,7 @@ export function AnimatedNumberLine() {
         @keyframes popInDiamond { to { transform: translateX(-50%) scale(1) rotate(45deg) } }
         @keyframes collapse { from { transform: scale(1) } to { transform: scaleY(0) } }
         @keyframes collapseDiamond { from { transform: translateX(-50%) scale(1) rotate(45deg) } to { transform: translateX(-50%) scaleY(0) rotate(45deg) } }
+        @keyframes turnWhite { to { background-color: white } }
       `}</style>
 
       <div className="relative py-2">
@@ -110,6 +125,7 @@ export function AnimatedNumberLine() {
           <>
             {data.dotPositions.map((pos, i) => {
               const appearanceIndex = data.dotOrder.indexOf(i)
+              const isClosest = i === closestDotIndex
               return (
                 <div
                   key={`${cycleKey}-${i}`}
@@ -119,7 +135,9 @@ export function AnimatedNumberLine() {
                     transform: 'scale(0)',
                     animation: exiting
                       ? `collapse ${EXIT_DURATION}s ease-in forwards`
-                      : `popIn 0.2s ease-out ${LINE_DURATION + DOT_START_DELAY + appearanceIndex * DOT_INTERVAL}s forwards`,
+                      : isClosest
+                        ? `popIn 0.2s ease-out ${LINE_DURATION + DOT_START_DELAY + appearanceIndex * DOT_INTERVAL}s forwards, turnWhite 0.3s ease-out ${winnerDelay}s forwards`
+                        : `popIn 0.2s ease-out ${LINE_DURATION + DOT_START_DELAY + appearanceIndex * DOT_INTERVAL}s forwards`,
                   }}
                 />
               )
