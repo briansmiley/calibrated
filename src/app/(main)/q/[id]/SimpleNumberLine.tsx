@@ -352,6 +352,9 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
           return (
           <>
           <div className="flex items-center justify-center gap-3 mt-4">
+            {question.unit && question.is_currency && (
+              <span className="text-2xl text-muted-foreground">{question.unit}</span>
+            )}
             <input
               type="text"
               inputMode="decimal"
@@ -362,6 +365,9 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
               style={{ width: `${inputWidth + 1}ch` }}
               className={`text-center text-2xl font-mono bg-transparent border-b border-muted-foreground/30 focus:border-primary focus:outline-none py-1 ${isOutOfRange ? 'line-through text-muted-foreground' : ''}`}
             />
+            {question.unit && !question.is_currency && (
+              <span className="text-2xl text-muted-foreground">{question.unit}</span>
+            )}
             <Tooltip>
               <TooltipTrigger asChild>
                 <span>
