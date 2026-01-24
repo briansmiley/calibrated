@@ -146,46 +146,46 @@ export default function CreateSimplePage() {
           />
         )}
 
-        {/* Answer */}
-        <Input
-          variant="underline"
-          type="number"
-          placeholder="Answer *"
-          value={trueAnswer}
-          onChange={(e) => setTrueAnswer(e.target.value)}
-          className="w-32"
-        />
-
-        {/* Units toggle/field */}
-        {!showUnits ? (
-          <button
-            type="button"
-            onClick={() => setShowUnits(true)}
-            className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <FaPlus className="h-3 w-3" />
-            <span>Units (optional)</span>
-          </button>
-        ) : (
-          <div className="flex items-center gap-3">
-            <Input
-              variant="underline"
-              type="text"
-              placeholder="Unit (e.g. kg, miles)"
-              value={unit}
-              onChange={(e) => setUnit(e.target.value)}
-              className="w-40"
-            />
-            <label className="flex items-center gap-1.5 text-sm text-muted-foreground cursor-pointer select-none">
-              <Checkbox
-                checked={isCurrency}
-                onCheckedChange={(checked) => setIsCurrency(checked === true)}
-                className="border-zinc-600 data-[state=checked]:bg-zinc-700 data-[state=checked]:border-zinc-600"
+        {/* Answer with units toggle */}
+        <div className="flex items-center gap-6">
+          <Input
+            variant="underline"
+            type="number"
+            placeholder="Answer *"
+            value={trueAnswer}
+            onChange={(e) => setTrueAnswer(e.target.value)}
+            className="w-32"
+          />
+          {!showUnits ? (
+            <button
+              type="button"
+              onClick={() => setShowUnits(true)}
+              className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <FaPlus className="h-3 w-3" />
+              <span>Units</span>
+            </button>
+          ) : (
+            <>
+              <Input
+                variant="underline"
+                type="text"
+                placeholder="Unit (e.g. kg, miles)"
+                value={unit}
+                onChange={(e) => setUnit(e.target.value)}
+                className="w-40"
               />
-              <span>Currency?</span>
-            </label>
-          </div>
-        )}
+              <label className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer select-none">
+                <Checkbox
+                  checked={isCurrency}
+                  onCheckedChange={(checked) => setIsCurrency(checked === true)}
+                  className="size-5 border-2 border-zinc-500 bg-black data-[state=checked]:bg-black data-[state=checked]:text-zinc-400 data-[state=checked]:border-zinc-500"
+                />
+                <span>Currency?</span>
+              </label>
+            </>
+          )}
+        </div>
 
         {/* Guess Range */}
         <div className="flex items-center gap-2">
