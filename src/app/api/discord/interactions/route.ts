@@ -62,10 +62,19 @@ export async function POST(request: Request) {
     }
 
     const url = `${APP_URL}/q/${result.data.shortId}`
+
+    // Build response message
+    const lines = [`**${options.question}**`]
+    if (options.description) {
+      lines.push('', `Details: ${options.description}`)
+    }
+    lines.push('', `Range: ${options.min} – ${options.max}`)
+    lines.push('', `[Guess Here](${url})`)
+
     return Response.json({
       type: CHANNEL_MESSAGE,
       data: {
-        content: `**${options.question}**\n\nGuess here: ${url}`,
+        content: lines.join('\n'),
       }
     })
   }
