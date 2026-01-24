@@ -179,7 +179,7 @@ export default function CreateSimplePage() {
                 <Checkbox
                   checked={isCurrency}
                   onCheckedChange={(checked) => setIsCurrency(checked === true)}
-                  className="size-5 border-2 border-zinc-500 bg-transparent data-[state=checked]:bg-transparent data-[state=checked]:text-zinc-400 data-[state=checked]:border-zinc-500"
+                  className="size-5 border-2 border-zinc-500 bg-transparent data-[state=checked]:!bg-transparent data-[state=checked]:text-zinc-400 data-[state=checked]:border-zinc-500"
                 />
                 <span>Currency?</span>
               </label>
