@@ -434,6 +434,19 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
 
       {/* Action area */}
       <div className="text-center mt-8 space-y-4">
+        {/* Show Revealed Answer button - for questions already revealed */}
+        {revealed && !justGuessed && (
+          <Button
+            variant="outline"
+            onClick={() => {
+              setJustGuessed(true)
+              setShowGuesses(true)
+            }}
+          >
+            Show Revealed Answer
+          </Button>
+        )}
+
         {!revealed && (
           <div className="flex items-center justify-center gap-2">
             {showPinInput ? (
