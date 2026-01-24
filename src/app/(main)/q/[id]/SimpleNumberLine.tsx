@@ -254,17 +254,18 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
               const isMyGuess = guess.id === myGuessId
               const isHovered = hoveredGuessId === guess.id
               const isClosest = guess.id === closestGuessId
-              const showDetails = revealed || isMyGuess || isHovered
+              // Only show details on hover, or for own guess (not all when revealed - too crowded)
+              const showDetails = isMyGuess || isHovered
               return (
                 <div
                   key={guess.id}
-                  className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 ${isHovered ? 'z-20' : ''}`}
+                  className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 cursor-pointer ${isHovered ? 'z-20' : ''}`}
                   style={{ left: `${getPositionFromValue(guess.value)}%` }}
                   onMouseEnter={() => setHoveredGuessId(guess.id)}
                   onMouseLeave={() => setHoveredGuessId(null)}
                 >
                   {/* Name label above (with arrow only for own guess) */}
-                  {(isMyGuess || isHovered || isClosest) && (
+                  {showDetails && (
                     <div className="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 flex flex-col items-center">
                       <span className={`text-lg whitespace-nowrap ${isClosest ? 'text-white font-medium' : 'text-muted-foreground'} ${isHovered ? 'bg-zinc-900 px-2 rounded' : ''}`}>
                         {guess.name || <BsIncognito className="h-5 w-5" />}
@@ -289,7 +290,7 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
                       }`}
                     />
                   )}
-                  {(showDetails || isClosest) && (
+                  {showDetails && (
                     <div className={`absolute top-full mt-1 left-1/2 -translate-x-1/2 text-lg whitespace-nowrap ${isClosest ? 'text-white font-medium' : 'text-muted-foreground'} ${isHovered ? 'bg-zinc-900 px-2 rounded' : ''}`}>
                       {formatValue(guess.value)}
                     </div>
