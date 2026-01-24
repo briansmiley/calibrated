@@ -6,7 +6,8 @@ import { SimpleQuestion, SimpleGuess } from '@/types/database'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
-import { FaLock, FaCheck, FaPlus, FaLink } from 'react-icons/fa'
+import { FaLock, FaCheck, FaPlus } from 'react-icons/fa'
+import { IoIosLink } from 'react-icons/io'
 import { BsIncognito } from 'react-icons/bs'
 import { formatWithCommas } from '@/lib/format'
 
@@ -219,23 +220,21 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
     <div className="mx-auto max-w-4xl py-8 px-4">
       {/* Question title and description */}
       <div className="text-center mb-6">
-        <div className="flex items-center justify-center gap-2">
-          <h1 className="text-3xl font-bold">{question.title}</h1>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                onClick={handleCopyLink}
-                className="p-1.5 text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <FaLink className="h-4 w-4" />
-              </button>
-            </TooltipTrigger>
-            <TooltipContent>{linkCopied ? 'Copied!' : 'Copy link'}</TooltipContent>
-          </Tooltip>
-        </div>
+        <h1 className="text-3xl font-bold">{question.title}</h1>
         {question.description && (
           <p className="text-muted-foreground mt-2">{question.description}</p>
         )}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              onClick={handleCopyLink}
+              className="mt-2 p-1.5 text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <IoIosLink className="h-5 w-5" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent>{linkCopied ? 'Copied!' : 'Copy link'}</TooltipContent>
+        </Tooltip>
       </div>
 
       {/* Number line container */}
