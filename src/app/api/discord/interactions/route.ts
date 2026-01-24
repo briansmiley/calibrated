@@ -1,5 +1,5 @@
 import { verifyKey } from 'discord-interactions'
-import { createQuestion } from '@/lib/services/questions'
+import { createQuestion, submitGuess } from '@/lib/services/questions'
 
 const DISCORD_PUBLIC_KEY = process.env.DISCORD_PUBLIC_KEY!
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://calibrated.vercel.app'
@@ -7,10 +7,17 @@ const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://calibrated.vercel.ap
 // Discord interaction types
 const PING = 1
 const APPLICATION_COMMAND = 2
+const MESSAGE_COMPONENT = 3
+const MODAL_SUBMIT = 5
 
 // Discord response types
 const PONG = 1
 const CHANNEL_MESSAGE = 4
+const MODAL = 9
+
+// Discord message flags
+const SUPPRESS_EMBEDS = 4
+const EPHEMERAL = 64
 
 export async function POST(request: Request) {
   const body = await request.text()
@@ -85,8 +92,108 @@ export async function POST(request: Request) {
       type: CHANNEL_MESSAGE,
       data: {
         content: lines.join('\n'),
+        flags: SUPPRESS_EMBEDS,
+        components: [{
+          type: 1, // Action row
+          components: [{
+            type: 2, // Button
+            style: 1, // Primary (blue)
+            label: "Guess",
+            custom_id: `guess_${result.data.shortId}`
+          }]
+        }]
       }
     })
+  }
+
+  // Handle button click (Guess button)
+  if (interaction.type === MESSAGE_COMPONENT) {
+    const customId = interaction.data.custom_id as string
+    if (customId.startsWith('guess_')) {
+      const questionId = customId.replace('guess_', '')
+
+      // Get user's display name
+      const displayName = interaction.member?.nick
+        || interaction.member?.user?.global_name
+        || interaction.member?.user?.username
+        || ''
+
+      // Respond with modal
+      return Response.json({
+        type: MODAL,
+        data: {
+          custom_id: `submit_${questionId}`,
+          title: "Submit Your Guess",
+          components: [{
+            type: 1,
+            components: [{
+              type: 4, // Text input
+              custom_id: "guess_value",
+              label: "Your Guess",
+              style: 1, // Short
+              required: true,
+              placeholder: "Enter a number"
+            }]
+          }, {
+            type: 1,
+            components: [{
+              type: 4,
+              custom_id: "guess_name",
+              label: "Name",
+              style: 1,
+              required: false,
+              value: displayName
+            }]
+          }]
+        }
+      })
+    }
+  }
+
+  // Handle modal submit
+  if (interaction.type === MODAL_SUBMIT) {
+    const customId = interaction.data.custom_id as string
+    if (customId.startsWith('submit_')) {
+      const questionId = customId.replace('submit_', '')
+
+      // Extract form values
+      const fields = interaction.data.components.flatMap(
+        (row: { components: Array<{ custom_id: string; value: string }> }) => row.components
+      )
+      const valueStr = fields.find((f: { custom_id: string }) => f.custom_id === 'guess_value')?.value
+      const name = fields.find((f: { custom_id: string }) => f.custom_id === 'guess_name')?.value
+
+      const value = parseFloat(valueStr || '')
+      if (isNaN(value)) {
+        return Response.json({
+          type: CHANNEL_MESSAGE,
+          data: {
+            content: "❌ Please enter a valid number",
+            flags: EPHEMERAL
+          }
+        })
+      }
+
+      const result = await submitGuess({ questionId, value, name: name || undefined })
+
+      if (!result.success) {
+        return Response.json({
+          type: CHANNEL_MESSAGE,
+          data: {
+            content: `❌ ${result.error}`,
+            flags: EPHEMERAL
+          }
+        })
+      }
+
+      return Response.json({
+        type: CHANNEL_MESSAGE,
+        data: {
+          content: `✓ Guess recorded: ${value}`,
+          flags: EPHEMERAL
+        }
+      })
+    }
   }
 
   return Response.json({ error: 'Unknown interaction' }, { status: 400 })
