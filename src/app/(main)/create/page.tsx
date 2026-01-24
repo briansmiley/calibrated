@@ -170,10 +170,11 @@ export default function CreateSimplePage() {
               <Input
                 variant="underline"
                 type="text"
-                placeholder="Unit (e.g. kg, miles)"
+                placeholder="Unit"
                 value={unit}
                 onChange={(e) => setUnit(e.target.value)}
-                className="w-40"
+                style={{ width: `${Math.max(unit.length, 4) + 1}ch` }}
+                className="font-mono"
               />
               <label className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer select-none">
                 <Checkbox
