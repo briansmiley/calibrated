@@ -15,6 +15,7 @@ A zero-friction estimation game. Users create questions with a number range and 
 ## Key URLs
 - Production: https://calibrated.vercel.app
 - Supabase project: zxaxpoerzsgeomaqjbsc
+- Discord bot install: https://calibrated.vercel.app/discord
 
 ## Database Schema
 Two main tables for the simple question mode (see `supabase/migrations/` for full schema):
@@ -44,6 +45,7 @@ Two main tables for the simple question mode (see `supabase/migrations/` for ful
 - `/` - Home page with logo and "Create Question" button
 - `/create` - Create a new question (title, range, answer, optional PIN)
 - `/q/[id]` - View question, submit guesses, reveal answer
+- `/api/discord/interactions` - Discord bot webhook endpoint
 
 ## Important Patterns
 
@@ -64,11 +66,19 @@ Questions use the first 7 characters of their UUID as the URL identifier. The `g
 ### Optimistic Updates
 Guesses are added to the UI immediately after successful insert, before the realtime subscription confirms.
 
+### Discord Bot
+A Discord bot allows creating and participating in questions directly in Discord:
+- `/calibrate` slash command creates a question and posts it to the channel
+- "Guess" button opens a modal for submitting guesses
+- Interactions are verified using `discord-interactions` library
+- Requires `DISCORD_PUBLIC_KEY` environment variable
+
 ## Environment Variables
 ```
 NEXT_PUBLIC_SUPABASE_URL=https://xxx.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=xxx
 NEXT_PUBLIC_APP_URL=https://calibrated.vercel.app (or http://localhost:3000)
+DISCORD_PUBLIC_KEY=xxx (for Discord bot signature verification)
 ```
 
 ## Local Development
@@ -97,6 +107,7 @@ pnpm test:e2e:headed # Run tests in headed browser mode
 - `/src/app/(main)/create/page.tsx` - Question creation form
 - `/src/app/(main)/q/[id]/page.tsx` - Question view page
 - `/src/app/(main)/q/[id]/SimpleNumberLine.tsx` - Interactive number line component
+- `/src/app/api/discord/interactions/route.ts` - Discord bot webhook handler
 - `/src/components/Header.tsx` - Simple header with logo and "New Question" link
 - `/src/components/CalibratedLogo.tsx` - Logo wordmark component
 - `/src/lib/supabase/client.ts` - Supabase browser client

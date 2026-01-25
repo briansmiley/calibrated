@@ -13,6 +13,12 @@ A zero-friction estimation game for testing calibration.
 5. **Collect guesses** - Others click on the number line to guess
 6. **Reveal the answer** - See how everyone did (optionally protect reveal with a PIN)
 
+## Discord Bot
+
+[Add to your server](https://calibrated.vercel.app/discord)
+
+Uses the `/calibrate` slash command.
+
 ## Tech Stack
 
 - Next.js 16 (App Router)
