@@ -24,6 +24,7 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
   const [revealed, setRevealed] = useState(question.revealed)
   const [hoverValue, setHoverValue] = useState<number | null>(null)
   const [lockedInNumber, setLockedInNumber] = useState<number | null>(null)
+  const [inputValue, setInputValue] = useState('')  // Raw input string to preserve decimal points
   const [justGuessed, setJustGuessed] = useState(false)
   const [showGuesses, setShowGuesses] = useState(false)
   const [myGuessId, setMyGuessId] = useState<string | null>(null)
@@ -136,6 +137,7 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
       setMyGuessId(data.id)
       setHoverValue(null)
       setLockedInNumber(null)
+      setInputValue('')
       setNameInput('')
       setShowNameInput(false)
     }
@@ -145,17 +147,22 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
     if (justGuessed) return
     const value = getValueFromPosition(e.clientX)
     setLockedInNumber(value)
+    setInputValue(formatWithCommas(value))
   }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const raw = e.target.value.replace(/,/g, '') // strip commas
-    if (raw === '' || raw === '-') {
-      setLockedInNumber(null)
-      return
-    }
-    const parsed = parseFloat(raw)
-    if (!isNaN(parsed)) {
-      setLockedInNumber(parsed)
+    // Allow empty, minus, or valid number patterns (including trailing decimal)
+    if (raw === '' || raw === '-' || /^-?\d*\.?\d*$/.test(raw)) {
+      setInputValue(raw)
+      if (raw === '' || raw === '-' || raw === '.' || raw === '-.') {
+        setLockedInNumber(null)
+      } else {
+        const parsed = parseFloat(raw)
+        if (!isNaN(parsed)) {
+          setLockedInNumber(parsed)
+        }
+      }
     }
   }
 
@@ -365,8 +372,8 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
 
         {/* Guess input - visible until user has guessed */}
         {!justGuessed && (() => {
-          const displayNumber = hoverValue ?? lockedInNumber
-          const displayValue = displayNumber !== null ? formatWithCommas(displayNumber) : ''
+          // When hovering, show formatted hover value; otherwise show raw input to preserve decimal points
+          const displayValue = hoverValue !== null ? formatWithCommas(hoverValue) : inputValue
           const inputWidth = Math.max(displayValue.length || 1, 3) // min 3 chars wide
           return (
           <>
