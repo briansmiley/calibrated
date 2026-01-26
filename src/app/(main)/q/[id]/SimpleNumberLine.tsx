@@ -116,6 +116,27 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
     setHoverValue(null)
   }
 
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (justGuessed) return
+    const touch = e.touches[0]
+    if (touch) {
+      const value = getValueFromPosition(touch.clientX)
+      setHoverValue(value)
+    }
+  }
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (justGuessed) return
+    // Use changedTouches to get the final touch position
+    const touch = e.changedTouches[0]
+    if (touch) {
+      const value = getValueFromPosition(touch.clientX)
+      setLockedInNumber(value)
+      setInputValue(formatWithCommas(value))
+    }
+    setHoverValue(null)
+  }
+
   const submitGuess = async (value: number) => {
     if (justGuessed) return
     if (value < question.min_value || value > question.max_value) return
@@ -257,10 +278,12 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
           {/* Interactive dot area - tiny inset to center dots on end caps */}
           <div
             ref={lineRef}
-            className={`absolute inset-y-0 left-0.5 right-0.5 ${!justGuessed ? 'cursor-crosshair' : ''}`}
+            className={`absolute inset-y-0 left-0.5 right-0.5 ${!justGuessed ? 'cursor-crosshair' : ''} touch-none`}
             onMouseMove={handleMouseMove}
             onMouseLeave={handleMouseLeave}
             onClick={handleClick}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
           >
             {/* Ghost dot - shows for hover or typed input */}
             {ghostValue !== null && !isNaN(ghostValue) && ghostValue >= question.min_value && ghostValue <= question.max_value && !justGuessed && (
