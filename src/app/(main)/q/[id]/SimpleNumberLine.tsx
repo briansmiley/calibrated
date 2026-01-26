@@ -309,8 +309,8 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
                     </div>
                   )}
                   {isClosest ? (
-                    // Winner: white diamond
-                    <div className="w-4 h-4 bg-white rotate-45 shadow-lg shadow-white/30 ring-2 ring-white/50" />
+                    // Winner: white dot
+                    <div className="w-5 h-5 rounded-full bg-white" />
                   ) : (
                     // Regular guess: circle
                     <div
