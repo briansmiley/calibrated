@@ -39,6 +39,15 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
 
   const hasPin = question.reveal_pin !== null
 
+  // Load saved name from localStorage on mount
+  useEffect(() => {
+    const savedName = localStorage.getItem('calibrated_name')
+    if (savedName) {
+      setNameInput(savedName)
+      setShowNameInput(true)
+    }
+  }, [])
+
   const handleCopyLink = async () => {
     await navigator.clipboard.writeText(window.location.href)
     setLinkCopied(true)
@@ -152,6 +161,13 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
       .single()
 
     if (!error && data) {
+      // Save or clear name in localStorage based on submission
+      if (nameInput.trim()) {
+        localStorage.setItem('calibrated_name', nameInput.trim())
+      } else {
+        localStorage.removeItem('calibrated_name')
+      }
+
       setGuesses((prev) => [...prev, data])
       setJustGuessed(true)
       setShowGuesses(true)
