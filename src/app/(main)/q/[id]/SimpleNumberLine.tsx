@@ -125,6 +125,15 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
     setHoverValue(null)
   }
 
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (justGuessed) return
+    const touch = e.touches[0]
+    if (touch) {
+      const value = getValueFromPosition(touch.clientX)
+      setHoverValue(value)
+    }
+  }
+
   const handleTouchMove = (e: React.TouchEvent) => {
     if (justGuessed) return
     const touch = e.touches[0]
@@ -298,6 +307,7 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
             onMouseMove={handleMouseMove}
             onMouseLeave={handleMouseLeave}
             onClick={handleClick}
+            onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
           >
