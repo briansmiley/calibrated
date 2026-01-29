@@ -35,6 +35,7 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
   const [guesses, setGuesses] = useState<SimpleGuess[]>(initialGuesses)
   const [revealed, setRevealed] = useState(question.revealed_at !== null)
   const [showResults, setShowResults] = useState(false) // Shows guesses, hides input, shows table
+  const [showAnswer, setShowAnswer] = useState(false) // User has opted to see the answer (only matters when revealed)
   const [myGuessId, setMyGuessId] = useState<string | null>(null) // Track user's own guess for arrow
 
   // Input state
@@ -193,6 +194,7 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
       setGuesses((prev) => [...prev, data])
       setMyGuessId(data.id)
       setShowResults(true)
+      setShowAnswer(revealed) // Show answer if already revealed
       setHoverValue(null)
       setLockedInNumber(null)
       setInputValue('')
@@ -258,12 +260,14 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
       .eq('id', question.id)
 
     setRevealed(true)
+    setShowAnswer(true) // User revealed it, so show the answer
     setShowPinInput(false)
     setShowRevealDialog(false)
   }
 
   const handleSeeGuesses = () => {
     setShowResults(true)
+    setShowAnswer(false) // Don't show answer, just guesses
     setShowSeeGuessesDialog(false)
   }
 
@@ -293,19 +297,20 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
   const guessesByDistance = [...guesses].sort((a, b) =>
     Math.abs(a.value - question.true_answer) - Math.abs(b.value - question.true_answer)
   )
-  // For closest guess, only consider pre-reveal guesses
+  // For closest guess, only consider pre-reveal guesses (only relevant when showing answer)
   const preRevealGuesses = guessesByDistance.filter(g => !isGuessAfterReveal(g))
   const closestGuess = preRevealGuesses[0] || null
-  const closestGuessId = revealed && closestGuess ? closestGuess.id : null
+  const closestGuessId = revealed && showAnswer && closestGuess ? closestGuess.id : null
 
   // Build table rows - either sorted by magnitude (interleaved with answer) or by distance
   type TableRow = { type: 'guess'; guess: SimpleGuess } | { type: 'answer' }
+  const shouldShowAnswer = revealed && showAnswer
 
   const tableRows: TableRow[] = (() => {
     if (sortByDistance) {
       // Sort by distance from answer (current behavior)
       const rows: TableRow[] = guessesByDistance.map(g => ({ type: 'guess' as const, guess: g }))
-      if (revealed) {
+      if (shouldShowAnswer) {
         rows.unshift({ type: 'answer' })
       }
       return rows
@@ -317,14 +322,14 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
 
       for (const guess of guessesByValue) {
         // Insert answer before the first guess that's >= answer
-        if (revealed && !answerInserted && guess.value >= question.true_answer) {
+        if (shouldShowAnswer && !answerInserted && guess.value >= question.true_answer) {
           rows.push({ type: 'answer' })
           answerInserted = true
         }
         rows.push({ type: 'guess', guess })
       }
       // If answer is larger than all guesses, add at end
-      if (revealed && !answerInserted) {
+      if (shouldShowAnswer && !answerInserted) {
         rows.push({ type: 'answer' })
       }
       return rows
@@ -429,8 +434,8 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
               )
             })}
 
-            {/* True answer - only when showResults AND revealed */}
-            {showResults && revealed && (
+            {/* True answer - only when showResults AND revealed AND showAnswer */}
+            {showResults && revealed && showAnswer && (
               <div
                 className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 ${answerHovered ? 'z-30' : 'z-10'}`}
                 style={{ left: `${getPositionFromValue(question.true_answer)}%` }}
@@ -577,7 +582,10 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
         {revealed && !showResults && (
           <Button
             variant="outline"
-            onClick={() => setShowResults(true)}
+            onClick={() => {
+              setShowResults(true)
+              setShowAnswer(true)
+            }}
           >
             Show Revealed Answer
           </Button>
@@ -639,8 +647,8 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
         {/* Results table - visible when showResults */}
         {showResults && (
           <div className="space-y-4">
-            {/* Answer summary - only when revealed */}
-            {revealed && (
+            {/* Answer summary - only when revealed AND showAnswer */}
+            {revealed && showAnswer && (
               <div className="space-y-1">
                 <p className="text-green-500 font-medium">
                   Answer: {formatValueWithUnit(question.true_answer)}
