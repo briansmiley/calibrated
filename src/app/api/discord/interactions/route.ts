@@ -2,6 +2,7 @@ import { verifyKey } from 'discord-interactions'
 import { createQuestion, getQuestion, submitGuess, revealAnswer } from '@/lib/services/questions'
 
 const DISCORD_PUBLIC_KEY = process.env.DISCORD_PUBLIC_KEY!
+const DISCORD_BOT_TOKEN = process.env.DISCORD_BOT_TOKEN
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://calibrated.live'
 
 // Discord interaction types
@@ -338,10 +339,14 @@ export async function POST(request: Request) {
         }
       ]
 
+      // Include channel and message IDs so we can update the message after submission
+      const channelId = interaction.channel_id
+      const messageId = interaction.message?.id
+
       return Response.json({
         type: MODAL,
         data: {
-          custom_id: `submit_${questionId}`,
+          custom_id: `submit_${questionId}_${channelId}_${messageId}`,
           title: modalTitle,
           components
         }
@@ -479,7 +484,11 @@ export async function POST(request: Request) {
   if (interaction.type === MODAL_SUBMIT) {
     const customId = interaction.data.custom_id as string
     if (customId.startsWith('submit_')) {
-      const questionId = customId.replace('submit_', '')
+      // Parse custom_id: submit_${questionId}_${channelId}_${messageId}
+      const parts = customId.replace('submit_', '').split('_')
+      const questionId = parts[0]
+      const channelId = parts[1]
+      const messageId = parts[2]
 
       // Extract form values
       const fields = interaction.data.components.flatMap(
@@ -509,6 +518,46 @@ export async function POST(request: Request) {
             flags: EPHEMERAL
           }
         })
+      }
+
+      // If the question is revealed and we have message info, update the original message
+      console.log('Message update check:', { hasToken: !!DISCORD_BOT_TOKEN, channelId, messageId })
+      if (DISCORD_BOT_TOKEN && channelId && messageId && messageId !== 'undefined') {
+        const questionResult = await getQuestion(questionId)
+        console.log('Question revealed?', questionResult.success && questionResult.data.question.revealed)
+        if (questionResult.success && questionResult.data.question.revealed) {
+          const q = questionResult.data.question
+          const content = formatRevealedMessage(
+            q,
+            questionResult.data.guesses,
+            q.shortId
+          )
+
+          // Update the original message via Discord REST API
+          const updateRes = await fetch(`https://discord.com/api/v10/channels/${channelId}/messages/${messageId}`, {
+            method: 'PATCH',
+            headers: {
+              'Authorization': `Bot ${DISCORD_BOT_TOKEN}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              content,
+              flags: SUPPRESS_EMBEDS,
+              components: [{
+                type: 1,
+                components: [
+                  {
+                    type: 2,
+                    style: 1,
+                    label: "Guess (before revealing!)",
+                    custom_id: `guess_${q.shortId}`
+                  }
+                ]
+              }]
+            })
+          })
+          console.log('Discord update response:', updateRes.status, await updateRes.text())
+        }
       }
 
       return Response.json({

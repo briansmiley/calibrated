@@ -71,8 +71,10 @@ Guesses are added to the UI immediately after successful insert, before the real
 A Discord bot allows creating and participating in questions directly in Discord:
 - `/calibrate` slash command creates a question and posts it to the channel
 - "Guess" button opens a modal for submitting guesses
+- When a guess is submitted on a revealed question, the original message updates to show the new guess
 - Interactions are verified using `discord-interactions` library
 - Requires `DISCORD_PUBLIC_KEY` environment variable
+- Requires `DISCORD_BOT_TOKEN` for updating messages after guesses on revealed questions
 
 ## Environment Variables
 ```
@@ -80,6 +82,7 @@ NEXT_PUBLIC_SUPABASE_URL=https://xxx.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=xxx
 NEXT_PUBLIC_APP_URL=https://calibrated.live (or http://localhost:3000)
 DISCORD_PUBLIC_KEY=xxx (for Discord bot signature verification)
+DISCORD_BOT_TOKEN=xxx (for updating Discord messages after guesses on revealed questions)
 ```
 
 ## Local Development
