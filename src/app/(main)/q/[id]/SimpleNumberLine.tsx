@@ -626,12 +626,19 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
                   )}
                   {sortedGuesses.map((guess, i) => {
                     const isClosest = revealed && i === 0
+                    const isHovered = hoveredGuessId === guess.id
                     return (
-                      <tr key={guess.id} className="border-t border-muted-foreground/20">
-                        <td className={`py-1.5 text-left ${isClosest ? 'text-white font-bold' : 'text-muted-foreground'}`}>
+                      <tr
+                        key={guess.id}
+                        className={`border-t border-muted-foreground/20 cursor-pointer transition-colors ${isHovered ? 'bg-zinc-800' : 'hover:bg-zinc-800/50'}`}
+                        onMouseEnter={() => setHoveredGuessId(guess.id)}
+                        onMouseLeave={() => setHoveredGuessId(null)}
+                        onTouchStart={() => setHoveredGuessId(guess.id)}
+                      >
+                        <td className={`py-1.5 text-left ${isClosest ? 'text-white font-bold' : isHovered ? 'text-white' : 'text-muted-foreground'}`}>
                           {guess.name || 'Anonymous'}
                         </td>
-                        <td className={`py-1.5 text-right tabular-nums ${isClosest ? 'text-white font-bold' : 'text-muted-foreground'}`}>
+                        <td className={`py-1.5 text-right tabular-nums ${isClosest ? 'text-white font-bold' : isHovered ? 'text-white' : 'text-muted-foreground'}`}>
                           {isClosest && '*'}{formatWithCommas(guess.value)}
                         </td>
                       </tr>
