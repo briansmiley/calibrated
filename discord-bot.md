@@ -40,7 +40,7 @@ Option types: `3` = string, `10` = number
 ## 4. Set Interactions Endpoint
 
 1. In Discord Developer Portal → "General Information"
-2. Set **Interactions Endpoint URL** to: `https://calibrated.vercel.app/api/discord/interactions`
+2. Set **Interactions Endpoint URL** to: `https://calibrated.live/api/discord/interactions`
 3. Discord will ping this endpoint to verify - it must respond correctly (see step 5)
 
 ## 5. Create the Endpoint
@@ -97,7 +97,7 @@ export async function POST(request: Request) {
       })
     }
 
-    const url = `https://calibrated.vercel.app/q/${result.data.shortId}`
+    const url = `https://calibrated.live/q/${result.data.shortId}`
     return Response.json({
       type: 4,
       data: {

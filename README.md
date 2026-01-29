@@ -2,7 +2,7 @@
 
 A zero-friction estimation game for testing calibration.
 
-**Live at [calibrated.vercel.app](https://calibrated.vercel.app)**
+**Live at [calibrated.live](https://calibrated.live)**
 
 ## How It Works
 
@@ -15,7 +15,7 @@ A zero-friction estimation game for testing calibration.
 
 ## Discord Bot
 
-[Add to your server](https://calibrated.vercel.app/discord)
+[Add to your server](https://calibrated.live/discord)
 
 Uses the `/calibrate` slash command.
 

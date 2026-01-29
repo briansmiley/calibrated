@@ -13,9 +13,9 @@ A zero-friction estimation game. Users create questions with a number range and 
 - **Icons**: react-icons (FaLock, FaLockOpen, FaPlus), lucide-react
 
 ## Key URLs
-- Production: https://calibrated.vercel.app
+- Production: https://calibrated.live
 - Supabase project: zxaxpoerzsgeomaqjbsc
-- Discord bot install: https://calibrated.vercel.app/discord
+- Discord bot install: https://calibrated.live/discord
 
 ## Database Schema
 Two main tables for the simple question mode (see `supabase/migrations/` for full schema):
@@ -77,7 +77,7 @@ A Discord bot allows creating and participating in questions directly in Discord
 ```
 NEXT_PUBLIC_SUPABASE_URL=https://xxx.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=xxx
-NEXT_PUBLIC_APP_URL=https://calibrated.vercel.app (or http://localhost:3000)
+NEXT_PUBLIC_APP_URL=https://calibrated.live (or http://localhost:3000)
 DISCORD_PUBLIC_KEY=xxx (for Discord bot signature verification)
 ```
 
