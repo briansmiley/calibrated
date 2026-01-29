@@ -127,6 +127,40 @@ function formatRevealedMessage(
   return lines.join('\n')
 }
 
+// Helper to format the unrevealed question message (for showing guess count)
+function formatUnrevealedMessage(
+  question: {
+    title: string
+    description: string | null
+    minValue: number | null
+    maxValue: number | null
+    unit: string | null
+    isCurrency: boolean
+    hasPin: boolean
+  },
+  guessCount: number,
+  shortId: string
+): string {
+  const url = `${APP_URL}/q/${shortId}`
+  const lines = [`[**${question.title}**](${url})`]
+
+  if (question.description) {
+    lines.push('', `Details: ${question.description}`)
+  }
+
+  // Format range with units (only if at least one bound exists)
+  const rangeText = formatRangeText(question.minValue, question.maxValue, question.unit, question.isCurrency)
+  if (rangeText) {
+    lines.push('', `Range: ${rangeText}`)
+  }
+
+  if (guessCount > 0) {
+    lines.push('', `📊 ${guessCount} guess${guessCount === 1 ? '' : 'es'}`)
+  }
+
+  return lines.join('\n')
+}
+
 export async function POST(request: Request) {
   const body = await request.text()
   const signature = request.headers.get('x-signature-ed25519')
@@ -536,43 +570,80 @@ export async function POST(request: Request) {
         })
       }
 
-      // If the question is revealed and we have message info, update the original message
-      console.log('Message update check:', { hasToken: !!DISCORD_BOT_TOKEN, channelId, messageId })
+      // Update the original message with new guess info
       if (DISCORD_BOT_TOKEN && channelId && messageId && messageId !== 'undefined') {
         const questionResult = await getQuestion(questionId)
-        console.log('Question revealed?', questionResult.success && questionResult.data.question.revealed)
-        if (questionResult.success && questionResult.data.question.revealed) {
+        if (questionResult.success) {
           const q = questionResult.data.question
-          const content = formatRevealedMessage(
-            q,
-            questionResult.data.guesses,
-            q.shortId
-          )
+          const guesses = questionResult.data.guesses
 
-          // Update the original message via Discord REST API
-          const updateRes = await fetch(`https://discord.com/api/v10/channels/${channelId}/messages/${messageId}`, {
-            method: 'PATCH',
-            headers: {
-              'Authorization': `Bot ${DISCORD_BOT_TOKEN}`,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              content,
-              flags: SUPPRESS_EMBEDS,
-              components: [{
-                type: 1,
-                components: [
-                  {
-                    type: 2,
-                    style: 1,
-                    label: "Guess (before revealing!)",
-                    custom_id: `guess_${q.shortId}`
-                  }
-                ]
-              }]
+          if (q.revealed) {
+            // Question is revealed - show updated results with new guess
+            const content = formatRevealedMessage(
+              q,
+              guesses,
+              q.shortId
+            )
+
+            await fetch(`https://discord.com/api/v10/channels/${channelId}/messages/${messageId}`, {
+              method: 'PATCH',
+              headers: {
+                'Authorization': `Bot ${DISCORD_BOT_TOKEN}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                content,
+                flags: SUPPRESS_EMBEDS,
+                components: [{
+                  type: 1,
+                  components: [
+                    {
+                      type: 2,
+                      style: 1,
+                      label: "Guess (before revealing!)",
+                      custom_id: `guess_${q.shortId}`
+                    }
+                  ]
+                }]
+              })
             })
-          })
-          console.log('Discord update response:', updateRes.status, await updateRes.text())
+          } else {
+            // Question not revealed - update with guess count
+            const content = formatUnrevealedMessage(
+              q,
+              guesses.length,
+              q.shortId
+            )
+
+            await fetch(`https://discord.com/api/v10/channels/${channelId}/messages/${messageId}`, {
+              method: 'PATCH',
+              headers: {
+                'Authorization': `Bot ${DISCORD_BOT_TOKEN}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                content,
+                flags: SUPPRESS_EMBEDS,
+                components: [{
+                  type: 1,
+                  components: [
+                    {
+                      type: 2,
+                      style: 1,
+                      label: "Guess",
+                      custom_id: `guess_${q.shortId}`
+                    },
+                    {
+                      type: 2,
+                      style: 2,
+                      label: q.hasPin ? "Reveal 🔒" : "Reveal",
+                      custom_id: `reveal_${q.shortId}`
+                    }
+                  ]
+                }]
+              })
+            })
+          }
         }
       }
 
