@@ -60,22 +60,37 @@ export default function CreateSimplePage() {
       return
     }
 
-    const min = parseFloat(minValue)
-    const max = parseFloat(maxValue)
+    const min = minValue.trim() ? parseFloat(minValue) : null
+    const max = maxValue.trim() ? parseFloat(maxValue) : null
     const answer = parseFloat(trueAnswer)
 
-    if (isNaN(min) || isNaN(max) || isNaN(answer)) {
-      setError('Please enter valid numbers')
+    if (isNaN(answer)) {
+      setError('Please enter a valid answer')
       return
     }
 
-    if (min >= max) {
+    if (min !== null && isNaN(min)) {
+      setError('Please enter a valid min value')
+      return
+    }
+
+    if (max !== null && isNaN(max)) {
+      setError('Please enter a valid max value')
+      return
+    }
+
+    if (min !== null && max !== null && min >= max) {
       setError('Min must be less than max')
       return
     }
 
-    if (answer < min || answer > max) {
-      setError('Answer must be between min and max')
+    if (min !== null && answer < min) {
+      setError('Answer must be at least min value')
+      return
+    }
+
+    if (max !== null && answer > max) {
+      setError('Answer must be at most max value')
       return
     }
 
@@ -106,7 +121,7 @@ export default function CreateSimplePage() {
     router.push(`/q/${shortId}`)
   }
 
-  const isValid = title.trim() && minValue && maxValue && trueAnswer && (!useLock || pin)
+  const isValid = title.trim() && trueAnswer && (!useLock || pin)
 
   return (
     <div className="mx-auto max-w-xl py-12 px-4">
@@ -188,12 +203,12 @@ export default function CreateSimplePage() {
           )}
         </div>
 
-        {/* Guess Range */}
+        {/* Guess Range (optional) */}
         <div className="flex items-center gap-2">
           <Input
             variant="underline"
             type="number"
-            placeholder="Min *"
+            placeholder="Min"
             value={minValue}
             onChange={(e) => setMinValue(e.target.value)}
             className="w-24 text-center"
@@ -202,7 +217,7 @@ export default function CreateSimplePage() {
           <Input
             variant="underline"
             type="number"
-            placeholder="Max *"
+            placeholder="Max"
             value={maxValue}
             onChange={(e) => setMaxValue(e.target.value)}
             className="w-24 text-center"

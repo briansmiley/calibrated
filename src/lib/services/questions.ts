@@ -8,8 +8,8 @@ import { SimpleQuestion, SimpleGuess } from '@/types/database'
 export type CreateQuestionInput = {
   title: string
   description?: string
-  minValue: number
-  maxValue: number
+  minValue?: number | null
+  maxValue?: number | null
   trueAnswer: number
   unit?: string
   isCurrency?: boolean
@@ -30,8 +30,8 @@ export type GetQuestionResult =
           shortId: string
           title: string
           description: string | null
-          minValue: number
-          maxValue: number
+          minValue: number | null
+          maxValue: number | null
           revealed: boolean
           revealedAt: string | null
           trueAnswer: number | null // Only included if revealed
@@ -124,16 +124,25 @@ export async function createQuestion(
     return { success: false, error: 'Title is required' }
   }
 
-  if (isNaN(input.minValue) || isNaN(input.maxValue) || isNaN(input.trueAnswer)) {
-    return { success: false, error: 'Invalid number values' }
+  if (isNaN(input.trueAnswer)) {
+    return { success: false, error: 'Invalid answer value' }
   }
 
-  if (input.minValue >= input.maxValue) {
+  const minValue = input.minValue ?? null
+  const maxValue = input.maxValue ?? null
+
+  // Validate bounds if both provided
+  if (minValue !== null && maxValue !== null && minValue >= maxValue) {
     return { success: false, error: 'Min must be less than max' }
   }
 
-  if (input.trueAnswer < input.minValue || input.trueAnswer > input.maxValue) {
-    return { success: false, error: 'Answer must be between min and max' }
+  // Validate answer against provided bounds
+  if (minValue !== null && input.trueAnswer < minValue) {
+    return { success: false, error: 'Answer must be at least min value' }
+  }
+
+  if (maxValue !== null && input.trueAnswer > maxValue) {
+    return { success: false, error: 'Answer must be at most max value' }
   }
 
   const supabase = await createClient()
@@ -143,8 +152,8 @@ export async function createQuestion(
     .insert({
       title: input.title.trim(),
       description: input.description?.trim() || null,
-      min_value: input.minValue,
-      max_value: input.maxValue,
+      min_value: minValue,
+      max_value: maxValue,
       true_answer: input.trueAnswer,
       unit: input.unit?.trim() || null,
       is_currency: input.isCurrency ?? false,
@@ -232,11 +241,17 @@ export async function submitGuess(
 
   const question = resolved.question
 
-  // Validate guess is within range
-  if (input.value < question.min_value || input.value > question.max_value) {
+  // Validate guess is within range (only check against explicit bounds)
+  if (question.min_value !== null && input.value < question.min_value) {
     return {
       success: false,
-      error: `Value must be between ${question.min_value} and ${question.max_value}`,
+      error: `Value must be at least ${question.min_value}`,
+    }
+  }
+  if (question.max_value !== null && input.value > question.max_value) {
+    return {
+      success: false,
+      error: `Value must be at most ${question.max_value}`,
     }
   }
 

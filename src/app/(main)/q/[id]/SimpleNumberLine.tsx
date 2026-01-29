@@ -27,6 +27,45 @@ interface Props {
   initialGuesses: SimpleGuess[]
 }
 
+// Calculate display bounds based on explicit bounds and data points
+function calculateBounds(
+  minBound: number | null,
+  maxBound: number | null,
+  dataPoints: number[]
+): { leftBound: number; rightBound: number; hasData: boolean } {
+  const hasData = dataPoints.length > 0
+
+  if (!hasData && minBound === null && maxBound === null) {
+    // No data and no bounds - use arbitrary range centered at 0
+    return { leftBound: -10, rightBound: 10, hasData: false }
+  }
+
+  if (hasData) {
+    const dataMin = Math.min(...dataPoints)
+    const dataMax = Math.max(...dataPoints)
+    const dataRange = dataMax - dataMin
+
+    // Handle single data point case
+    const padding = dataRange === 0 ? Math.abs(dataMin) * 0.1 || 1 : dataRange * 0.1
+
+    const leftBound = minBound ?? (dataMin - padding)
+    const rightBound = maxBound ?? (dataMax + padding)
+
+    return { leftBound, rightBound, hasData: true }
+  }
+
+  // No data but at least one bound exists
+  if (minBound !== null && maxBound !== null) {
+    return { leftBound: minBound, rightBound: maxBound, hasData: false }
+  }
+  if (minBound !== null) {
+    // Only min bound - extend rightward
+    return { leftBound: minBound, rightBound: minBound + 100, hasData: false }
+  }
+  // Only max bound - extend leftward
+  return { leftBound: maxBound! - 100, rightBound: maxBound!, hasData: false }
+}
+
 export function SimpleNumberLine({ question, initialGuesses }: Props) {
   const supabase = createClient()
   const lineRef = useRef<HTMLDivElement>(null)
@@ -57,6 +96,17 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
   const [sortByDistance, setSortByDistance] = useState(false) // false = magnitude, true = distance from answer
 
   const hasPin = question.reveal_pin !== null
+
+  // Calculate display bounds based on guesses and revealed answer
+  const dataPoints = [
+    ...guesses.map(g => g.value),
+    ...(revealed && showAnswer ? [question.true_answer] : [])
+  ]
+  const { leftBound, rightBound, hasData } = calculateBounds(
+    question.min_value,
+    question.max_value,
+    dataPoints
+  )
 
   // Load saved name from localStorage on mount
   useEffect(() => {
@@ -115,12 +165,12 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
   }, [supabase, question.id])
 
   const getValueFromPosition = (clientX: number): number => {
-    if (!lineRef.current) return question.min_value
+    if (!lineRef.current) return leftBound
     const rect = lineRef.current.getBoundingClientRect()
     const x = clientX - rect.left
     const percent = Math.max(0, Math.min(1, x / rect.width))
-    const value = question.min_value + percent * (question.max_value - question.min_value)
-    const range = question.max_value - question.min_value
+    const value = leftBound + percent * (rightBound - leftBound)
+    const range = rightBound - leftBound
     if (range <= 1) return Math.round(value * 100) / 100
     if (range <= 10) return Math.round(value * 10) / 10
     if (range <= 100) return Math.round(value)
@@ -128,7 +178,7 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
   }
 
   const getPositionFromValue = (value: number): number => {
-    return ((value - question.min_value) / (question.max_value - question.min_value)) * 100
+    return ((value - leftBound) / (rightBound - leftBound)) * 100
   }
 
   const handleMouseMove = (e: React.MouseEvent) => {
@@ -172,7 +222,9 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
 
   const submitGuess = async (value: number) => {
     if (showResults) return
-    if (value < question.min_value || value > question.max_value) return
+    // Only validate against explicit bounds
+    if (question.min_value !== null && value < question.min_value) return
+    if (question.max_value !== null && value > question.max_value) return
 
     const { data, error } = await supabase
       .from('simple_guesses')
@@ -231,10 +283,10 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
     }
   }
 
-  // Validation
+  // Validation - only check against explicit bounds
   const isInRange = lockedInNumber !== null &&
-    lockedInNumber >= question.min_value &&
-    lockedInNumber <= question.max_value
+    (question.min_value === null || lockedInNumber >= question.min_value) &&
+    (question.max_value === null || lockedInNumber <= question.max_value)
 
   const ghostValue = hoverValue ?? (isInRange ? lockedInNumber : null)
   const isInputValid = isInRange
@@ -272,7 +324,7 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
   }
 
   const formatValue = (value: number): string => {
-    const range = question.max_value - question.min_value
+    const range = rightBound - leftBound
     if (range <= 1) return value.toFixed(2)
     if (range <= 10) return value.toFixed(1)
     if (range >= 1000000) return (value / 1000000).toFixed(1) + 'M'
@@ -363,9 +415,20 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
           {/* The line */}
           <div className="absolute top-1/2 left-0 right-0 h-1 bg-muted-foreground/30 -translate-y-1/2" />
 
-          {/* End caps */}
-          <div className="absolute top-1/2 left-0 w-1 h-8 bg-muted-foreground/50 -translate-y-1/2" />
-          <div className="absolute top-1/2 right-0 w-1 h-8 bg-muted-foreground/50 -translate-y-1/2" />
+          {/* End caps - only show when explicit bounds exist */}
+          {question.min_value !== null && (
+            <div className="absolute top-1/2 left-0 w-1 h-8 bg-muted-foreground/50 -translate-y-1/2" />
+          )}
+          {question.max_value !== null && (
+            <div className="absolute top-1/2 right-0 w-1 h-8 bg-muted-foreground/50 -translate-y-1/2" />
+          )}
+
+          {/* Empty state - no data and no bounds */}
+          {!hasData && question.min_value === null && question.max_value === null && !showResults && (
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-3xl text-muted-foreground/50">
+              ?
+            </div>
+          )}
 
           {/* Interactive dot area */}
           <div
@@ -379,7 +442,7 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
             onTouchEnd={handleTouchEnd}
           >
             {/* Ghost dot - shows for hover or typed input when not in results view */}
-            {!showResults && ghostValue !== null && !isNaN(ghostValue) && ghostValue >= question.min_value && ghostValue <= question.max_value && (
+            {!showResults && ghostValue !== null && !isNaN(ghostValue) && ghostValue >= leftBound && ghostValue <= rightBound && (
               <div
                 className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 pointer-events-none"
                 style={{ left: `${getPositionFromValue(ghostValue)}%` }}
@@ -454,21 +517,31 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
           </div>
         </div>
 
-        {/* Range labels */}
-        <div className="flex justify-between text-xl text-muted-foreground mt-2">
-          <Tooltip clickable>
-            <TooltipTrigger asChild>
-              <span>{formatValueWithUnit(question.min_value)}</span>
-            </TooltipTrigger>
-            <TooltipContent>{formatWithCommas(question.min_value)}</TooltipContent>
-          </Tooltip>
-          <Tooltip clickable>
-            <TooltipTrigger asChild>
-              <span>{formatValueWithUnit(question.max_value)}</span>
-            </TooltipTrigger>
-            <TooltipContent>{formatWithCommas(question.max_value)}</TooltipContent>
-          </Tooltip>
-        </div>
+        {/* Range labels - only show when explicit bounds exist */}
+        {(question.min_value !== null || question.max_value !== null) && (
+          <div className="flex justify-between text-xl text-muted-foreground mt-2">
+            {question.min_value !== null ? (
+              <Tooltip clickable>
+                <TooltipTrigger asChild>
+                  <span>{formatValueWithUnit(question.min_value)}</span>
+                </TooltipTrigger>
+                <TooltipContent>{formatWithCommas(question.min_value)}</TooltipContent>
+              </Tooltip>
+            ) : (
+              <span />
+            )}
+            {question.max_value !== null ? (
+              <Tooltip clickable>
+                <TooltipTrigger asChild>
+                  <span>{formatValueWithUnit(question.max_value)}</span>
+                </TooltipTrigger>
+                <TooltipContent>{formatWithCommas(question.max_value)}</TooltipContent>
+              </Tooltip>
+            ) : (
+              <span />
+            )}
+          </div>
+        )}
 
         {/* Guess input - visible when NOT in results view */}
         {!showResults && (() => {
@@ -506,7 +579,11 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
                     </span>
                   </TooltipTrigger>
                   {isOutOfRange && (
-                    <TooltipContent>Out of range ({formatValue(question.min_value)}-{formatValue(question.max_value)})</TooltipContent>
+                    <TooltipContent>
+                      Out of range (
+                      {question.min_value !== null ? formatValue(question.min_value) : '...'}-
+                      {question.max_value !== null ? formatValue(question.max_value) : '...'})
+                    </TooltipContent>
                   )}
                 </Tooltip>
               </div>
@@ -550,7 +627,7 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
           <span className="text-muted-foreground">
             Guesses: {guesses.length}
           </span>
-          {!showResults && (
+          {!showResults && guesses.length > 0 && (
             <AlertDialog open={showSeeGuessesDialog} onOpenChange={setShowSeeGuessesDialog}>
               <AlertDialogTrigger asChild>
                 <Button variant="outline" size="icon-sm">

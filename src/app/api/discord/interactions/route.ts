@@ -21,13 +21,37 @@ const MODAL = 9
 const SUPPRESS_EMBEDS = 4
 const EPHEMERAL = 64
 
+// Helper to format range text for Discord messages
+function formatRangeText(
+  minValue: number | null,
+  maxValue: number | null,
+  unit: string | null,
+  isCurrency: boolean
+): string | null {
+  if (minValue === null && maxValue === null) {
+    return null // No bounds, don't show range
+  }
+
+  const formatBound = (value: number | null): string => {
+    if (value === null) return '...'
+    if (unit && isCurrency) return `${unit}${value}`
+    if (unit) return `${value} ${unit}`
+    return `${value}`
+  }
+
+  const min = formatBound(minValue)
+  const max = formatBound(maxValue)
+
+  return `${min} – ${max}`
+}
+
 // Helper to format the revealed message with spoiler text
 function formatRevealedMessage(
   question: {
     title: string
     description: string | null
-    minValue: number
-    maxValue: number
+    minValue: number | null
+    maxValue: number | null
     trueAnswer: number | null
     unit: string | null
     isCurrency: boolean
@@ -42,16 +66,11 @@ function formatRevealedMessage(
     lines.push('', `Details: ${question.description}`)
   }
 
-  // Format range with units
-  let rangeText: string
-  if (question.unit && question.isCurrency) {
-    rangeText = `${question.unit}${question.minValue} – ${question.unit}${question.maxValue}`
-  } else if (question.unit) {
-    rangeText = `${question.minValue} – ${question.maxValue} ${question.unit}`
-  } else {
-    rangeText = `${question.minValue} – ${question.maxValue}`
+  // Format range with units (only if at least one bound exists)
+  const rangeText = formatRangeText(question.minValue, question.maxValue, question.unit, question.isCurrency)
+  if (rangeText) {
+    lines.push('', `Range: ${rangeText}`)
   }
-  lines.push('', `Range: ${rangeText}`)
 
   // Add spoilered results
   lines.push('', '**Tap to reveal answer:**')
@@ -138,8 +157,8 @@ export async function POST(request: Request) {
     const result = await createQuestion({
       title: options.question as string,
       description: options.description as string | undefined,
-      minValue: options.min as number,
-      maxValue: options.max as number,
+      minValue: options.min as number | undefined,
+      maxValue: options.max as number | undefined,
       trueAnswer: options.answer as number,
       revealPin: options.pin as string | undefined,
       unit: options.unit as string | undefined,
@@ -165,16 +184,16 @@ export async function POST(request: Request) {
       lines.push('', `Details: ${options.description}`)
     }
 
-    // Format range with units
-    let rangeText: string
-    if (options.unit && options.currency) {
-      rangeText = `${options.unit}${options.min} – ${options.unit}${options.max}`
-    } else if (options.unit) {
-      rangeText = `${options.min} – ${options.max} ${options.unit}`
-    } else {
-      rangeText = `${options.min} – ${options.max}`
+    // Format range with units (only if at least one bound exists)
+    const rangeText = formatRangeText(
+      options.min as number | undefined ?? null,
+      options.max as number | undefined ?? null,
+      options.unit as string | undefined ?? null,
+      options.currency as boolean | undefined ?? false
+    )
+    if (rangeText) {
+      lines.push('', `Range: ${rangeText}`)
     }
-    lines.push('', `Range: ${rangeText}`)
 
     const hasPin = !!options.pin
 
@@ -299,27 +318,20 @@ export async function POST(request: Request) {
         || interaction.member?.user?.username
         || ''
 
-      // Format range with units
-      let rangeText: string
-      if (q.unit && q.isCurrency) {
-        rangeText = `${q.unit}${q.minValue} – ${q.unit}${q.maxValue}`
-      } else if (q.unit) {
-        rangeText = `${q.minValue} – ${q.maxValue} ${q.unit}`
-      } else {
-        rangeText = `${q.minValue} – ${q.maxValue}`
-      }
+      // Format range for modal label (only if at least one bound exists)
+      const rangeText = formatRangeText(q.minValue, q.maxValue, q.unit, q.isCurrency)
 
       // Modal title (45 char limit) - truncate question if needed
       const modalTitle = q.title.length > 45 ? q.title.slice(0, 42) + '...' : q.title
 
       const components = [
-        // Guess input with range in label
+        // Guess input with range in label (if applicable)
         {
           type: 1,
           components: [{
             type: 4,
             custom_id: "guess_value",
-            label: `Your Guess (${rangeText})`,
+            label: rangeText ? `Your Guess (${rangeText})` : 'Your Guess',
             style: 1,
             required: true,
             placeholder: "Enter a number"
