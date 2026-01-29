@@ -2,7 +2,7 @@ import { verifyKey } from 'discord-interactions'
 import { createQuestion, getQuestion, submitGuess } from '@/lib/services/questions'
 
 const DISCORD_PUBLIC_KEY = process.env.DISCORD_PUBLIC_KEY!
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://calibrated.vercel.app'
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://calibrated.live'
 
 // Discord interaction types
 const PING = 1
