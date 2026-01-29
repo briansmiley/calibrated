@@ -12,9 +12,11 @@
 2. Click "Reset Token" to get your **Bot Token** (save this - shown only once)
 3. Under "Privileged Gateway Intents", you likely don't need any for slash commands
 
-## 3. Register Slash Command
+## 3. Register Slash Commands
 
-Run this once to register the `/calibrate` command with Discord:
+Run these once to register the slash commands with Discord:
+
+### `/calibrate` - Create a question
 
 ```bash
 curl -X POST "https://discord.com/api/v10/applications/YOUR_APP_ID/commands" \
@@ -31,6 +33,23 @@ curl -X POST "https://discord.com/api/v10/applications/YOUR_APP_ID/commands" \
       {"name": "max", "description": "Maximum value for guesses", "type": 10, "required": true},
       {"name": "pin", "description": "PIN to protect reveal (optional)", "type": 3, "required": false},
       {"name": "description", "description": "Additional context (optional)", "type": 3, "required": false}
+    ]
+  }'
+```
+
+### `/reveal` - Reveal a question's answer
+
+```bash
+curl -X POST "https://discord.com/api/v10/applications/YOUR_APP_ID/commands" \
+  -H "Authorization: Bot YOUR_BOT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "reveal",
+    "description": "Reveal the answer to a Calibrated question",
+    "type": 1,
+    "options": [
+      {"name": "question", "description": "Question ID or URL (e.g. abc1234 or calibrated.live/q/abc1234)", "type": 3, "required": true},
+      {"name": "pin", "description": "PIN if the question is protected", "type": 3, "required": false}
     ]
   }'
 ```
