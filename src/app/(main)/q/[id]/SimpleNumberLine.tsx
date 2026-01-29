@@ -495,6 +495,11 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
 
       {/* Action area */}
       <div className="text-center mt-8 space-y-4">
+        {/* Guess count */}
+        <p className="text-muted-foreground">
+          Guesses: {guesses.length}
+        </p>
+
         {/* Show Revealed Answer button - for questions already revealed */}
         {revealed && !justGuessed && (
           <Button
