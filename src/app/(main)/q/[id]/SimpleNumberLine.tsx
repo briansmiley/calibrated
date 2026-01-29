@@ -601,11 +601,11 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
             {revealed && (
               <div className="space-y-1">
                 <p className="text-green-500 font-medium">
-                  Answer: {formatWithCommas(question.true_answer)}
+                  Answer: {formatValueWithUnit(question.true_answer)}
                 </p>
                 {closestGuess && (
                   <p className="text-white font-medium">
-                    Closest: {closestGuess.name || 'Anonymous'} ({formatWithCommas(closestGuess.value)})
+                    Closest: {closestGuess.name || 'Anonymous'} ({formatValueWithUnit(closestGuess.value)})
                   </p>
                 )}
               </div>
@@ -618,30 +618,37 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
                   {/* Answer row - only when revealed */}
                   {revealed && (
                     <tr className="text-green-500 font-bold">
-                      <td className="py-1.5 text-left">Answer</td>
-                      <td className="py-1.5 text-right tabular-nums">
-                        {formatWithCommas(question.true_answer)}
+                      <td className="py-1.5 px-2 text-left">Answer</td>
+                      <td className="py-1.5 px-2 text-right tabular-nums">
+                        {formatValueWithUnit(question.true_answer)}
                       </td>
                     </tr>
                   )}
                   {sortedGuesses.map((guess, i) => {
                     const isClosest = revealed && i === 0
                     const isHovered = hoveredGuessId === guess.id
+                    const timestamp = guess.created_at
+                      ? new Date(guess.created_at).toLocaleString()
+                      : null
                     return (
-                      <tr
-                        key={guess.id}
-                        className={`border-t border-muted-foreground/20 cursor-pointer transition-colors ${isHovered ? 'bg-zinc-800' : 'hover:bg-zinc-800/50'}`}
-                        onMouseEnter={() => setHoveredGuessId(guess.id)}
-                        onMouseLeave={() => setHoveredGuessId(null)}
-                        onTouchStart={() => setHoveredGuessId(guess.id)}
-                      >
-                        <td className={`py-1.5 text-left ${isClosest ? 'text-white font-bold' : isHovered ? 'text-white' : 'text-muted-foreground'}`}>
-                          {guess.name || 'Anonymous'}
-                        </td>
-                        <td className={`py-1.5 text-right tabular-nums ${isClosest ? 'text-white font-bold' : isHovered ? 'text-white' : 'text-muted-foreground'}`}>
-                          {isClosest && '*'}{formatWithCommas(guess.value)}
-                        </td>
-                      </tr>
+                      <Tooltip key={guess.id}>
+                        <TooltipTrigger asChild>
+                          <tr
+                            className={`border-t border-muted-foreground/20 cursor-default transition-colors ${isHovered ? 'bg-zinc-800' : 'hover:bg-zinc-800/50'}`}
+                            onMouseEnter={() => setHoveredGuessId(guess.id)}
+                            onMouseLeave={() => setHoveredGuessId(null)}
+                            onTouchStart={() => setHoveredGuessId(guess.id)}
+                          >
+                            <td className={`py-1.5 px-2 text-left ${isClosest ? 'text-white font-bold' : isHovered ? 'text-white' : 'text-muted-foreground'}`}>
+                              {guess.name || 'Anonymous'}
+                            </td>
+                            <td className={`py-1.5 px-2 text-right tabular-nums ${isClosest ? 'text-white font-bold' : isHovered ? 'text-white' : 'text-muted-foreground'}`}>
+                              {isClosest && '*'}{formatValueWithUnit(guess.value)}
+                            </td>
+                          </tr>
+                        </TooltipTrigger>
+                        {timestamp && <TooltipContent>{timestamp}</TooltipContent>}
+                      </Tooltip>
                     )
                   })}
                 </tbody>

@@ -40,6 +40,7 @@ Two main tables for the simple question mode (see `supabase/migrations/` for ful
 - **Do not push directly to main** unless explicitly discussed for a given feature
 - Create feature branches and open PRs for review
 - Branch naming: `feature/description` or `fix/description`
+- **Wait for explicit approval before pushing/merging** - After implementing a feature, let the user test it locally first. Don't push or create PRs until they explicitly say to (e.g., "push it", "looks good, merge it"). Questions like "make sense?" are confirming the plan, not approval to ship.
 
 ## Routes
 - `/` - Home page with logo and "Create Question" button
