@@ -184,6 +184,71 @@ export async function POST(request: Request) {
     })
   }
 
+  // Handle /reveal slash command
+  if (interaction.type === APPLICATION_COMMAND && interaction.data.name === 'reveal') {
+    const options = Object.fromEntries(
+      interaction.data.options?.map((o: { name: string; value: string | number }) => [o.name, o.value]) || []
+    )
+
+    // Extract question ID from input (could be full URL or just the ID)
+    const questionInput = (options.question as string).trim()
+    const questionId = questionInput.replace(/.*\/q\//, '').slice(0, 7)
+
+    // Try to reveal
+    const revealResult = await revealAnswer({
+      questionId,
+      pin: (options.pin as string)?.toLowerCase(),
+    })
+
+    if (!revealResult.success) {
+      return Response.json({
+        type: CHANNEL_MESSAGE,
+        data: {
+          content: `❌ ${revealResult.error}`,
+          flags: EPHEMERAL
+        }
+      })
+    }
+
+    // Fetch question details and guesses
+    const questionResult = await getQuestion(questionId)
+    if (!questionResult.success) {
+      return Response.json({
+        type: CHANNEL_MESSAGE,
+        data: {
+          content: "❌ Failed to fetch question details",
+          flags: EPHEMERAL
+        }
+      })
+    }
+
+    const q = questionResult.data.question
+    const content = formatRevealedMessage(
+      { ...q, trueAnswer: revealResult.data.trueAnswer },
+      questionResult.data.guesses,
+      q.shortId
+    )
+
+    return Response.json({
+      type: CHANNEL_MESSAGE,
+      data: {
+        content,
+        flags: SUPPRESS_EMBEDS,
+        components: [{
+          type: 1,
+          components: [
+            {
+              type: 2,
+              style: 1,
+              label: "Guess",
+              custom_id: `guess_${q.shortId}`
+            }
+          ]
+        }]
+      }
+    })
+  }
+
   // Handle button click (Guess button)
   if (interaction.type === MESSAGE_COMPONENT) {
     const customId = interaction.data.custom_id as string
