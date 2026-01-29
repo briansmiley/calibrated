@@ -33,7 +33,7 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
 
   // Core state
   const [guesses, setGuesses] = useState<SimpleGuess[]>(initialGuesses)
-  const [revealed, setRevealed] = useState(question.revealed)
+  const [revealed, setRevealed] = useState(question.revealed_at !== null)
   const [showResults, setShowResults] = useState(false) // Shows guesses, hides input, shows table
   const [myGuessId, setMyGuessId] = useState<string | null>(null) // Track user's own guess for arrow
 
@@ -100,7 +100,7 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
           filter: `id=eq.${question.id}`,
         },
         (payload) => {
-          if ((payload.new as SimpleQuestion).revealed) {
+          if ((payload.new as SimpleQuestion).revealed_at !== null) {
             setRevealed(true)
           }
         }
@@ -253,7 +253,7 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
 
     await supabase
       .from('simple_questions')
-      .update({ revealed: true })
+      .update({ revealed_at: new Date().toISOString() })
       .eq('id', question.id)
 
     setRevealed(true)

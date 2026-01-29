@@ -165,7 +165,7 @@ export type Database = {
           max_value: number
           true_answer: number
           reveal_pin: string | null
-          revealed: boolean
+          revealed_at: string | null
           unit: string | null
           is_currency: boolean
           discord_user_id: string | null
@@ -179,7 +179,7 @@ export type Database = {
           max_value: number
           true_answer: number
           reveal_pin?: string | null
-          revealed?: boolean
+          revealed_at?: string | null
           unit?: string | null
           is_currency?: boolean
           discord_user_id?: string | null
@@ -193,7 +193,7 @@ export type Database = {
           max_value?: number
           true_answer?: number
           reveal_pin?: string | null
-          revealed?: boolean
+          revealed_at?: string | null
           unit?: string | null
           is_currency?: boolean
           discord_user_id?: string | null
@@ -236,7 +236,7 @@ export type Database = {
           max_value: number
           true_answer: number
           reveal_pin: string | null
-          revealed: boolean
+          revealed_at: string | null
           unit: string | null
           is_currency: boolean
           discord_user_id: string | null
