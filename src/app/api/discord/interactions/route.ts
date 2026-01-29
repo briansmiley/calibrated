@@ -99,6 +99,7 @@ function formatRevealedMessage(
       if (a.afterReveal !== b.afterReveal) return a.afterReveal ? 1 : -1
       return 0
     })
+    const hasAfterRevealGuess = sorted.some(g => g.afterReveal)
     sorted.forEach((g, i) => {
       const name = g.name || 'Anonymous'
       const star = i === 0 && !g.afterReveal ? ' ⭐' : ''
@@ -114,6 +115,9 @@ function formatRevealedMessage(
       }
       spoilerLines.push(`${i + 1}. ${name} (${guessText})${star}${lateMarker}`)
     })
+    if (hasAfterRevealGuess) {
+      spoilerLines.push('', '* guessed after reveal')
+    }
   } else if (guesses.length === 0) {
     spoilerLines.push('', 'No guesses yet!')
   }
