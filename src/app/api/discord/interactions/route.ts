@@ -116,6 +116,9 @@ export async function POST(request: Request) {
       interaction.data.options?.map((o: { name: string; value: string | number }) => [o.name, o.value]) || []
     )
 
+    // Get Discord user ID (works for both guild and DM interactions)
+    const discordUserId = interaction.member?.user?.id || interaction.user?.id
+
     const result = await createQuestion({
       title: options.question as string,
       description: options.description as string | undefined,
@@ -125,6 +128,7 @@ export async function POST(request: Request) {
       revealPin: options.pin as string | undefined,
       unit: options.unit as string | undefined,
       isCurrency: options.currency as boolean | undefined,
+      discordUserId,
     })
 
     if (!result.success) {
@@ -190,14 +194,18 @@ export async function POST(request: Request) {
       interaction.data.options?.map((o: { name: string; value: string | number }) => [o.name, o.value]) || []
     )
 
+    // Get Discord user ID (works for both guild and DM interactions)
+    const discordUserId = interaction.member?.user?.id || interaction.user?.id
+
     // Extract question ID from input (could be full URL or just the ID)
     const questionInput = (options.question as string).trim()
     const questionId = questionInput.replace(/.*\/q\//, '').slice(0, 7)
 
-    // Try to reveal
+    // Try to reveal (creator can bypass PIN)
     const revealResult = await revealAnswer({
       questionId,
       pin: (options.pin as string)?.toLowerCase(),
+      discordUserId,
     })
 
     if (!revealResult.success) {
@@ -329,6 +337,9 @@ export async function POST(request: Request) {
     if (customId.startsWith('reveal_')) {
       const questionId = customId.replace('reveal_', '')
 
+      // Get Discord user ID
+      const discordUserId = interaction.member?.user?.id || interaction.user?.id
+
       // Fetch question details
       const questionResult = await getQuestion(questionId)
       if (!questionResult.success) {
@@ -371,8 +382,11 @@ export async function POST(request: Request) {
         })
       }
 
-      // If has PIN, show modal to enter PIN
-      if (q.hasPin) {
+      // Check if user is the creator (can bypass PIN)
+      const isCreator = discordUserId && q.discordUserId && discordUserId === q.discordUserId
+
+      // If has PIN and user is not creator, show modal to enter PIN
+      if (q.hasPin && !isCreator) {
         return Response.json({
           type: MODAL,
           data: {
@@ -394,8 +408,8 @@ export async function POST(request: Request) {
         })
       }
 
-      // No PIN - reveal directly
-      const revealResult = await revealAnswer({ questionId })
+      // No PIN (or creator bypassing PIN) - reveal directly
+      const revealResult = await revealAnswer({ questionId, discordUserId })
       if (!revealResult.success) {
         return Response.json({
           type: CHANNEL_MESSAGE,
@@ -495,13 +509,16 @@ export async function POST(request: Request) {
     if (customId.startsWith('revealpin_')) {
       const questionId = customId.replace('revealpin_', '')
 
+      // Get Discord user ID
+      const discordUserId = interaction.member?.user?.id || interaction.user?.id
+
       // Extract PIN value
       const fields = interaction.data.components.flatMap(
         (row: { components: Array<{ custom_id: string; value: string }> }) => row.components
       )
       const pin = fields.find((f: { custom_id: string }) => f.custom_id === 'pin_value')?.value
 
-      const revealResult = await revealAnswer({ questionId, pin: pin?.toLowerCase() })
+      const revealResult = await revealAnswer({ questionId, pin: pin?.toLowerCase(), discordUserId })
       if (!revealResult.success) {
         return Response.json({
           type: CHANNEL_MESSAGE,
