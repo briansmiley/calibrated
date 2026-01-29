@@ -6,7 +6,7 @@ import { SimpleQuestion, SimpleGuess } from '@/types/database'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
-import { FaLock, FaCheck, FaPlus, FaEye } from 'react-icons/fa'
+import { FaLock, FaCheck, FaPlus, FaEye, FaSortAmountDown, FaSortNumericDown } from 'react-icons/fa'
 import { IoIosLink } from 'react-icons/io'
 import { BsIncognito } from 'react-icons/bs'
 import { formatWithCommas } from '@/lib/format'
@@ -53,6 +53,7 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
   const [linkCopied, setLinkCopied] = useState(false)
   const [showRevealDialog, setShowRevealDialog] = useState(false)
   const [showSeeGuessesDialog, setShowSeeGuessesDialog] = useState(false)
+  const [sortByDistance, setSortByDistance] = useState(false) // false = magnitude, true = distance from answer
 
   const hasPin = question.reveal_pin !== null
 
@@ -282,12 +283,53 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
     return `${formatted} ${question.unit}`
   }
 
+  // Helper to check if guess was made after reveal
+  const isGuessAfterReveal = (guess: SimpleGuess): boolean => {
+    if (!question.revealed_at || !guess.created_at) return false
+    return new Date(guess.created_at) > new Date(question.revealed_at)
+  }
+
   // Computed values for results display
-  const sortedGuesses = [...guesses].sort((a, b) =>
+  const guessesByDistance = [...guesses].sort((a, b) =>
     Math.abs(a.value - question.true_answer) - Math.abs(b.value - question.true_answer)
   )
-  const closestGuess = sortedGuesses[0] || null
+  // For closest guess, only consider pre-reveal guesses
+  const preRevealGuesses = guessesByDistance.filter(g => !isGuessAfterReveal(g))
+  const closestGuess = preRevealGuesses[0] || null
   const closestGuessId = revealed && closestGuess ? closestGuess.id : null
+
+  // Build table rows - either sorted by magnitude (interleaved with answer) or by distance
+  type TableRow = { type: 'guess'; guess: SimpleGuess } | { type: 'answer' }
+
+  const tableRows: TableRow[] = (() => {
+    if (sortByDistance) {
+      // Sort by distance from answer (current behavior)
+      const rows: TableRow[] = guessesByDistance.map(g => ({ type: 'guess' as const, guess: g }))
+      if (revealed) {
+        rows.unshift({ type: 'answer' })
+      }
+      return rows
+    } else {
+      // Sort by magnitude - interleave answer with guesses
+      const guessesByValue = [...guesses].sort((a, b) => a.value - b.value)
+      const rows: TableRow[] = []
+      let answerInserted = false
+
+      for (const guess of guessesByValue) {
+        // Insert answer before the first guess that's >= answer
+        if (revealed && !answerInserted && guess.value >= question.true_answer) {
+          rows.push({ type: 'answer' })
+          answerInserted = true
+        }
+        rows.push({ type: 'guess', guess })
+      }
+      // If answer is larger than all guesses, add at end
+      if (revealed && !answerInserted) {
+        rows.push({ type: 'answer' })
+      }
+      return rows
+    }
+  })()
 
   return (
     <div className="mx-auto max-w-4xl py-8 px-4">
@@ -612,47 +654,86 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
             )}
 
             {/* Guesses table */}
-            {sortedGuesses.length > 0 && (
-              <table className="w-full max-w-xs mx-auto text-sm">
-                <tbody>
-                  {/* Answer row - only when revealed */}
-                  {revealed && (
-                    <tr className="text-green-500 font-bold">
-                      <td className="py-1.5 px-2 text-left">Answer</td>
-                      <td className="py-1.5 px-2 text-right tabular-nums">
-                        {formatValueWithUnit(question.true_answer)}
-                      </td>
-                    </tr>
-                  )}
-                  {sortedGuesses.map((guess, i) => {
-                    const isClosest = revealed && i === 0
-                    const isHovered = hoveredGuessId === guess.id
-                    const timestamp = guess.created_at
-                      ? new Date(guess.created_at).toLocaleString()
-                      : null
-                    return (
-                      <Tooltip key={guess.id}>
-                        <TooltipTrigger asChild>
-                          <tr
-                            className={`border-t border-muted-foreground/20 cursor-default transition-colors ${isHovered ? 'bg-zinc-800' : 'hover:bg-zinc-800/50'}`}
-                            onMouseEnter={() => setHoveredGuessId(guess.id)}
-                            onMouseLeave={() => setHoveredGuessId(null)}
-                            onTouchStart={() => setHoveredGuessId(guess.id)}
-                          >
-                            <td className={`py-1.5 px-2 text-left ${isClosest ? 'text-white font-bold' : isHovered ? 'text-white' : 'text-muted-foreground'}`}>
-                              {guess.name || 'Anonymous'}
-                            </td>
-                            <td className={`py-1.5 px-2 text-right tabular-nums ${isClosest ? 'text-white font-bold' : isHovered ? 'text-white' : 'text-muted-foreground'}`}>
-                              {isClosest && '*'}{formatValueWithUnit(guess.value)}
+            {guesses.length > 0 && (
+              <div>
+                {/* Sort toggle */}
+                <div className="flex justify-end mb-2 max-w-xs mx-auto">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        onClick={() => setSortByDistance(!sortByDistance)}
+                        className="p-1.5 text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        {sortByDistance ? (
+                          <FaSortAmountDown className="h-4 w-4" />
+                        ) : (
+                          <FaSortNumericDown className="h-4 w-4" />
+                        )}
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      {sortByDistance ? 'Sorted by distance from answer' : 'Sorted by value'}
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
+                <table className="w-full max-w-xs mx-auto text-sm">
+                  <tbody>
+                    {tableRows.map((row, i) => {
+                      if (row.type === 'answer') {
+                        return (
+                          <tr key="answer" className="text-green-500 font-bold border-t border-muted-foreground/20">
+                            <td className="py-1.5 px-2 text-left">Answer</td>
+                            <td className="py-1.5 px-2 text-right tabular-nums">
+                              {formatValueWithUnit(question.true_answer)}
                             </td>
                           </tr>
-                        </TooltipTrigger>
-                        {timestamp && <TooltipContent>{timestamp}</TooltipContent>}
-                      </Tooltip>
-                    )
-                  })}
-                </tbody>
-              </table>
+                        )
+                      }
+
+                      const guess = row.guess
+                      const isClosest = guess.id === closestGuessId
+                      const isHovered = hoveredGuessId === guess.id
+                      const isAfterReveal = isGuessAfterReveal(guess)
+                      const timestamp = guess.created_at
+                        ? new Date(guess.created_at).toLocaleString()
+                        : null
+
+                      // Determine text color: muted for after-reveal, otherwise based on closest/hover state
+                      const textClass = isAfterReveal
+                        ? 'text-muted-foreground/50 italic'
+                        : isClosest
+                          ? 'text-white font-bold'
+                          : isHovered
+                            ? 'text-white'
+                            : 'text-muted-foreground'
+
+                      return (
+                        <Tooltip key={guess.id}>
+                          <TooltipTrigger asChild>
+                            <tr
+                              className={`border-t border-muted-foreground/20 cursor-default transition-colors ${isHovered ? 'bg-zinc-800' : 'hover:bg-zinc-800/50'}`}
+                              onMouseEnter={() => setHoveredGuessId(guess.id)}
+                              onMouseLeave={() => setHoveredGuessId(null)}
+                              onTouchStart={() => setHoveredGuessId(guess.id)}
+                            >
+                              <td className={`py-1.5 px-2 text-left ${textClass}`}>
+                                {guess.name || 'Anonymous'}
+                              </td>
+                              <td className={`py-1.5 px-2 text-right tabular-nums ${textClass}`}>
+                                {isClosest && '*'}{formatValueWithUnit(guess.value)}
+                              </td>
+                            </tr>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            {timestamp}
+                            {isAfterReveal && ' (after reveal)'}
+                          </TooltipContent>
+                        </Tooltip>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
             )}
           </div>
         )}
