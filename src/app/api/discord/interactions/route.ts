@@ -31,7 +31,7 @@ function formatRevealedMessage(
     unit: string | null
     isCurrency: boolean
   },
-  guesses: Array<{ value: number; name: string | null }>,
+  guesses: Array<{ value: number; name: string | null; afterReveal: boolean }>,
   shortId: string
 ): string {
   const url = `${APP_URL}/q/${shortId}`
@@ -70,14 +70,20 @@ function formatRevealedMessage(
 
   if (guesses.length > 0 && question.trueAnswer !== null) {
     spoilerLines.push('')
-    // Sort by distance from answer
-    const sorted = [...guesses].sort(
-      (a, b) => Math.abs(a.value - question.trueAnswer!) - Math.abs(b.value - question.trueAnswer!)
-    )
+    // Sort by distance from answer (pre-reveal guesses first for tie-breaking)
+    const sorted = [...guesses].sort((a, b) => {
+      const distA = Math.abs(a.value - question.trueAnswer!)
+      const distB = Math.abs(b.value - question.trueAnswer!)
+      if (distA !== distB) return distA - distB
+      // Tie-breaker: pre-reveal guesses win
+      if (a.afterReveal !== b.afterReveal) return a.afterReveal ? 1 : -1
+      return 0
+    })
     sorted.forEach((g, i) => {
       const name = g.name || 'Anonymous'
-      const star = i === 0 ? ' ⭐' : ''
-      spoilerLines.push(`${i + 1}. ${name} (${g.value})${star}`)
+      const star = i === 0 && !g.afterReveal ? ' ⭐' : ''
+      const lateMarker = g.afterReveal ? '*' : ''
+      spoilerLines.push(`${i + 1}. ${name} (${g.value})${star}${lateMarker}`)
     })
   } else if (guesses.length === 0) {
     spoilerLines.push('', 'No guesses yet!')
@@ -248,7 +254,7 @@ export async function POST(request: Request) {
             {
               type: 2,
               style: 1,
-              label: "Guess",
+              label: "Guess (before revealing!)",
               custom_id: `guess_${q.shortId}`
             }
           ]
@@ -373,7 +379,7 @@ export async function POST(request: Request) {
                 {
                   type: 2,
                   style: 1,
-                  label: "Guess",
+                  label: "Guess (before revealing!)",
                   custom_id: `guess_${q.shortId}`
                 }
               ]
@@ -450,7 +456,7 @@ export async function POST(request: Request) {
               {
                 type: 2,
                 style: 1,
-                label: "Guess",
+                label: "Guess (before revealing!)",
                 custom_id: `guess_${updated.question.shortId}`
               }
             ]
@@ -559,7 +565,7 @@ export async function POST(request: Request) {
               {
                 type: 2,
                 style: 1,
-                label: "Guess",
+                label: "Guess (before revealing!)",
                 custom_id: `guess_${updated.question.shortId}`
               }
             ]

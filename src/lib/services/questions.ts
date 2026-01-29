@@ -33,6 +33,7 @@ export type GetQuestionResult =
           minValue: number
           maxValue: number
           revealed: boolean
+          revealedAt: string | null
           trueAnswer: number | null // Only included if revealed
           unit: string | null
           isCurrency: boolean
@@ -45,6 +46,7 @@ export type GetQuestionResult =
           value: number
           name: string | null
           createdAt: string | null
+          afterReveal: boolean
         }>
       }
     }
@@ -186,6 +188,9 @@ export async function getQuestion(questionId: string): Promise<GetQuestionResult
     return { success: false, error: 'Failed to fetch guesses' }
   }
 
+  const revealed = question.revealed_at !== null
+  const revealedAt = question.revealed_at
+
   return {
     success: true,
     data: {
@@ -196,8 +201,9 @@ export async function getQuestion(questionId: string): Promise<GetQuestionResult
         description: question.description,
         minValue: question.min_value,
         maxValue: question.max_value,
-        revealed: question.revealed,
-        trueAnswer: question.revealed ? question.true_answer : null,
+        revealed,
+        revealedAt,
+        trueAnswer: revealed ? question.true_answer : null,
         unit: question.unit,
         isCurrency: question.is_currency,
         hasPin: question.reveal_pin !== null,
@@ -209,6 +215,7 @@ export async function getQuestion(questionId: string): Promise<GetQuestionResult
         value: g.value,
         name: g.name,
         createdAt: g.created_at,
+        afterReveal: revealedAt !== null && g.created_at !== null && g.created_at > revealedAt,
       })),
     },
   }
@@ -271,7 +278,7 @@ export async function revealAnswer(
   const question = resolved.question
 
   // Already revealed
-  if (question.revealed) {
+  if (question.revealed_at !== null) {
     return {
       success: true,
       data: { trueAnswer: question.true_answer },
@@ -297,7 +304,7 @@ export async function revealAnswer(
 
   const { error } = await supabase
     .from('simple_questions')
-    .update({ revealed: true })
+    .update({ revealed_at: new Date().toISOString() })
     .eq('id', question.id)
 
   if (error) {
