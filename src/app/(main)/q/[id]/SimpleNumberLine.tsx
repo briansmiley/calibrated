@@ -601,11 +601,11 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
             {revealed && (
               <div className="space-y-1">
                 <p className="text-green-500 font-medium">
-                  Answer: {formatWithCommas(question.true_answer)}
+                  Answer: {formatValueWithUnit(question.true_answer)}
                 </p>
                 {closestGuess && (
                   <p className="text-white font-medium">
-                    Closest: {closestGuess.name || 'Anonymous'} ({formatWithCommas(closestGuess.value)})
+                    Closest: {closestGuess.name || 'Anonymous'} ({formatValueWithUnit(closestGuess.value)})
                   </p>
                 )}
               </div>
@@ -620,7 +620,7 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
                     <tr className="text-green-500 font-bold">
                       <td className="py-1.5 px-2 text-left">Answer</td>
                       <td className="py-1.5 px-2 text-right tabular-nums">
-                        {formatWithCommas(question.true_answer)}
+                        {formatValueWithUnit(question.true_answer)}
                       </td>
                     </tr>
                   )}
@@ -643,7 +643,7 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
                               {guess.name || 'Anonymous'}
                             </td>
                             <td className={`py-1.5 px-2 text-right tabular-nums ${isClosest ? 'text-white font-bold' : isHovered ? 'text-white' : 'text-muted-foreground'}`}>
-                              {isClosest && '*'}{formatWithCommas(guess.value)}
+                              {isClosest && '*'}{formatValueWithUnit(guess.value)}
                             </td>
                           </tr>
                         </TooltipTrigger>

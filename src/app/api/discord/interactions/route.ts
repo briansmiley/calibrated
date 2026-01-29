@@ -77,7 +77,16 @@ function formatRevealedMessage(
     sorted.forEach((g, i) => {
       const name = g.name || 'Anonymous'
       const star = i === 0 ? ' ⭐' : ''
-      spoilerLines.push(`${i + 1}. ${name} (${g.value})${star}`)
+      // Format guess value with units
+      let guessText: string
+      if (question.unit && question.isCurrency) {
+        guessText = `${question.unit}${g.value}`
+      } else if (question.unit) {
+        guessText = `${g.value} ${question.unit}`
+      } else {
+        guessText = `${g.value}`
+      }
+      spoilerLines.push(`${i + 1}. ${name} (${guessText})${star}`)
     })
   } else if (guesses.length === 0) {
     spoilerLines.push('', 'No guesses yet!')
