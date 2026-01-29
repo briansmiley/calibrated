@@ -14,6 +14,7 @@ export type CreateQuestionInput = {
   unit?: string
   isCurrency?: boolean
   revealPin?: string
+  discordUserId?: string
 }
 
 export type CreateQuestionResult =
@@ -36,6 +37,7 @@ export type GetQuestionResult =
           unit: string | null
           isCurrency: boolean
           hasPin: boolean
+          discordUserId: string | null
           createdAt: string | null
         }
         guesses: Array<{
@@ -61,6 +63,7 @@ export type SubmitGuessResult =
 export type RevealAnswerInput = {
   questionId: string // Can be short ID or full ID
   pin?: string
+  discordUserId?: string // If provided and matches creator, bypasses PIN
 }
 
 export type RevealAnswerResult =
@@ -144,6 +147,7 @@ export async function createQuestion(
       unit: input.unit?.trim() || null,
       is_currency: input.isCurrency ?? false,
       reveal_pin: input.revealPin || null,
+      discord_user_id: input.discordUserId || null,
     })
     .select()
     .single()
@@ -197,6 +201,7 @@ export async function getQuestion(questionId: string): Promise<GetQuestionResult
         unit: question.unit,
         isCurrency: question.is_currency,
         hasPin: question.reveal_pin !== null,
+        discordUserId: question.discord_user_id,
         createdAt: question.created_at,
       },
       guesses: (guesses || []).map((g: SimpleGuess) => ({
@@ -273,10 +278,15 @@ export async function revealAnswer(
     }
   }
 
-  // Check PIN if required
-  if (question.reveal_pin !== null) {
+  // Check if caller is the creator (Discord user ID match bypasses PIN)
+  const isCreator = input.discordUserId &&
+    question.discord_user_id &&
+    input.discordUserId === question.discord_user_id
+
+  // Check PIN if required (unless caller is creator)
+  if (question.reveal_pin !== null && !isCreator) {
     if (!input.pin) {
-      return { success: false, error: 'PIN required' }
+      return { success: false, error: 'PIN required (or ask the question creator to reveal)' }
     }
     if (input.pin !== question.reveal_pin) {
       return { success: false, error: 'Invalid PIN' }

@@ -168,6 +168,7 @@ export type Database = {
           revealed: boolean
           unit: string | null
           is_currency: boolean
+          discord_user_id: string | null
           created_at: string | null
         }
         Insert: {
@@ -181,6 +182,7 @@ export type Database = {
           revealed?: boolean
           unit?: string | null
           is_currency?: boolean
+          discord_user_id?: string | null
           created_at?: string | null
         }
         Update: {
@@ -194,6 +196,7 @@ export type Database = {
           revealed?: boolean
           unit?: string | null
           is_currency?: boolean
+          discord_user_id?: string | null
           created_at?: string | null
         }
         Relationships: []
@@ -236,6 +239,7 @@ export type Database = {
           revealed: boolean
           unit: string | null
           is_currency: boolean
+          discord_user_id: string | null
           created_at: string | null
         }[]
       }
