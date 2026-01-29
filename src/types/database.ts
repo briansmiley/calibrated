@@ -161,8 +161,8 @@ export type Database = {
           id: string
           title: string
           description: string | null
-          min_value: number
-          max_value: number
+          min_value: number | null
+          max_value: number | null
           true_answer: number
           reveal_pin: string | null
           revealed_at: string | null
@@ -175,8 +175,8 @@ export type Database = {
           id?: string
           title: string
           description?: string | null
-          min_value: number
-          max_value: number
+          min_value?: number | null
+          max_value?: number | null
           true_answer: number
           reveal_pin?: string | null
           revealed_at?: string | null
@@ -189,8 +189,8 @@ export type Database = {
           id?: string
           title?: string
           description?: string | null
-          min_value?: number
-          max_value?: number
+          min_value?: number | null
+          max_value?: number | null
           true_answer?: number
           reveal_pin?: string | null
           revealed_at?: string | null
@@ -232,8 +232,8 @@ export type Database = {
           id: string
           title: string
           description: string | null
-          min_value: number
-          max_value: number
+          min_value: number | null
+          max_value: number | null
           true_answer: number
           reveal_pin: string | null
           revealed_at: string | null
