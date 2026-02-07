@@ -6,7 +6,16 @@ import { SimpleQuestion, SimpleGuess } from '@/types/database'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
-import { FaLock, FaCheck, FaPlus, FaEye, FaSortAmountDown, FaSortNumericDown } from 'react-icons/fa'
+import { FaLock, FaCheck, FaPlus, FaEye, FaSortAmountDown, FaSortNumericDown, FaPercent } from 'react-icons/fa'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { IoIosLink } from 'react-icons/io'
 import { BsIncognito } from 'react-icons/bs'
 import { formatWithCommas } from '@/lib/format'
@@ -93,7 +102,7 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
   const [linkCopied, setLinkCopied] = useState(false)
   const [showRevealDialog, setShowRevealDialog] = useState(false)
   const [showSeeGuessesDialog, setShowSeeGuessesDialog] = useState(false)
-  const [sortByDistance, setSortByDistance] = useState(false) // false = magnitude, true = distance from answer
+  const [sortMode, setSortMode] = useState<'magnitude' | 'distance' | 'ratio'>('magnitude')
 
   const hasPin = question.reveal_pin !== null
 
@@ -358,10 +367,25 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
   type TableRow = { type: 'guess'; guess: SimpleGuess } | { type: 'answer' }
   const shouldShowAnswer = revealed && showAnswer
 
+  // Ratio distance: how far off multiplicatively (e.g. 2x off in either direction)
+  const getRatio = (guess: SimpleGuess) => {
+    const answer = question.true_answer
+    if (answer === 0 && guess.value === 0) return 1
+    if (answer === 0 || guess.value === 0) return Infinity
+    return Math.max(guess.value / answer, answer / guess.value)
+  }
+
+  const guessesByRatio = [...guesses].sort((a, b) => getRatio(a) - getRatio(b))
+
   const tableRows: TableRow[] = (() => {
-    if (sortByDistance) {
-      // Sort by distance from answer (current behavior)
+    if (sortMode === 'distance') {
       const rows: TableRow[] = guessesByDistance.map(g => ({ type: 'guess' as const, guess: g }))
+      if (shouldShowAnswer) {
+        rows.unshift({ type: 'answer' })
+      }
+      return rows
+    } else if (sortMode === 'ratio') {
+      const rows: TableRow[] = guessesByRatio.map(g => ({ type: 'guess' as const, guess: g }))
       if (shouldShowAnswer) {
         rows.unshift({ type: 'answer' })
       }
@@ -373,14 +397,12 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
       let answerInserted = false
 
       for (const guess of guessesByValue) {
-        // Insert answer before the first guess that's >= answer
         if (shouldShowAnswer && !answerInserted && guess.value >= question.true_answer) {
           rows.push({ type: 'answer' })
           answerInserted = true
         }
         rows.push({ type: 'guess', guess })
       }
-      // If answer is larger than all guesses, add at end
       if (shouldShowAnswer && !answerInserted) {
         rows.push({ type: 'answer' })
       }
@@ -741,25 +763,30 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
             {/* Guesses table */}
             {guesses.length > 0 && (
               <div>
-                {/* Sort toggle */}
+                {/* Sort dropdown */}
                 <div className="flex justify-end mb-2 max-w-xs mx-auto">
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <button
-                        onClick={() => setSortByDistance(!sortByDistance)}
-                        className="p-1.5 text-muted-foreground hover:text-foreground transition-colors"
-                      >
-                        {sortByDistance ? (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button className="p-1.5 text-muted-foreground hover:text-foreground transition-colors">
+                        {sortMode === 'magnitude' ? (
+                          <FaSortNumericDown className="h-4 w-4" />
+                        ) : sortMode === 'distance' ? (
                           <FaSortAmountDown className="h-4 w-4" />
                         ) : (
-                          <FaSortNumericDown className="h-4 w-4" />
+                          <FaPercent className="h-4 w-4" />
                         )}
                       </button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      {sortByDistance ? 'Sorted by distance from answer' : 'Sorted by value'}
-                    </TooltipContent>
-                  </Tooltip>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuLabel>Sort by</DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuRadioGroup value={sortMode} onValueChange={(v) => setSortMode(v as typeof sortMode)}>
+                        <DropdownMenuRadioItem value="magnitude">Magnitude</DropdownMenuRadioItem>
+                        <DropdownMenuRadioItem value="distance">Distance</DropdownMenuRadioItem>
+                        <DropdownMenuRadioItem value="ratio">Ratio</DropdownMenuRadioItem>
+                      </DropdownMenuRadioGroup>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
                 <table className="w-full max-w-xs mx-auto text-sm">
                   <tbody>
@@ -771,6 +798,9 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
                             <td className="py-1.5 px-2 text-right tabular-nums">
                               {formatValueWithUnit(question.true_answer)}
                             </td>
+                            {shouldShowAnswer && sortMode !== 'magnitude' && (
+                              <td className="py-1.5 px-2 text-right tabular-nums w-16"></td>
+                            )}
                           </tr>
                         )
                       }
@@ -807,11 +837,21 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
                               <td className={`py-1.5 px-2 text-right tabular-nums ${textClass}`}>
                                 {isClosest && '*'}{formatValueWithUnit(guess.value)}
                               </td>
+                              {shouldShowAnswer && sortMode !== 'magnitude' && (
+                                <td className={`py-1.5 px-2 text-right tabular-nums text-xs w-16 ${textClass}`}>
+                                  {sortMode === 'distance'
+                                    ? `${guess.value >= question.true_answer ? '+' : '\u2212'}${formatWithCommas(Math.abs(guess.value - question.true_answer))}`
+                                    : `${getRatio(guess) === Infinity ? '\u221E' : getRatio(guess).toFixed(2)}x`
+                                  }
+                                </td>
+                              )}
                             </tr>
                           </TooltipTrigger>
-                          <TooltipContent>
+                          <TooltipContent className="text-center">
                             {timestamp}
                             {isAfterReveal && ' (after reveal)'}
+                            <br />
+                            Guess: {formatWithCommas(guess.value)}
                           </TooltipContent>
                         </Tooltip>
                       )
