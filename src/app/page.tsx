@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { FaArrowRight } from 'react-icons/fa'
+import { FaArrowRight, FaDiscord } from 'react-icons/fa'
 import { CalibratedLogo } from '@/components/CalibratedLogo'
 import { AnimatedNumberLine } from '@/components/AnimatedNumberLine'
 import { INITIAL_DELAY } from '@/lib/animationTiming'
@@ -22,6 +22,13 @@ export default function Home() {
       >
         Pose Question
         <FaArrowRight className="h-4 w-4" />
+      </Link>
+      <Link
+        href="/discord"
+        className="mt-4 px-6 py-3 rounded-full border border-primary text-primary hover:bg-primary/10 transition-colors font-medium flex items-center gap-2"
+      >
+        Add Discord Bot
+        <FaDiscord className="h-5 w-5" />
       </Link>
     </div>
   )
