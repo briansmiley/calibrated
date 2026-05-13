@@ -82,6 +82,7 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
   // Core state
   const [guesses, setGuesses] = useState<SimpleGuess[]>(initialGuesses)
   const [revealed, setRevealed] = useState(question.revealed_at !== null)
+  const [trueAnswer, setTrueAnswer] = useState<number | null>(question.true_answer)
   const [showResults, setShowResults] = useState(false) // Shows guesses, hides input, shows table
   const [showAnswer, setShowAnswer] = useState(false) // User has opted to see the answer (only matters when revealed)
   const [myGuessId, setMyGuessId] = useState<string | null>(null) // Track user's own guess for arrow
@@ -94,9 +95,11 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
   const [nameInput, setNameInput] = useState('')
 
   // UI state
-  const [showPinInput, setShowPinInput] = useState(false)
+  const [showRevealForm, setShowRevealForm] = useState(false)
   const [pinInput, setPinInput] = useState('')
   const [pinError, setPinError] = useState(false)
+  const [revealAnswerInput, setRevealAnswerInput] = useState('')
+  const [revealError, setRevealError] = useState<string | null>(null)
   const [hoveredGuessId, setHoveredGuessId] = useState<string | null>(null)
   const [answerHovered, setAnswerHovered] = useState(false)
   const [linkCopied, setLinkCopied] = useState(false)
@@ -105,11 +108,12 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
   const [sortMode, setSortMode] = useState<'magnitude' | 'distance' | 'ratio'>('magnitude')
 
   const hasPin = question.reveal_pin !== null
+  const needsAnswerOnReveal = trueAnswer === null
 
   // Calculate display bounds based on guesses and revealed answer
   const dataPoints = [
     ...guesses.map(g => g.value),
-    ...(revealed && showAnswer ? [question.true_answer] : [])
+    ...(revealed && showAnswer && trueAnswer !== null ? [trueAnswer] : [])
   ]
   const { leftBound, rightBound, hasData } = calculateBounds(
     question.min_value,
@@ -161,8 +165,12 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
           filter: `id=eq.${question.id}`,
         },
         (payload) => {
-          if ((payload.new as SimpleQuestion).revealed_at !== null) {
+          const updated = payload.new as SimpleQuestion
+          if (updated.revealed_at !== null) {
             setRevealed(true)
+          }
+          if (updated.true_answer !== null) {
+            setTrueAnswer(updated.true_answer)
           }
         }
       )
@@ -302,28 +310,66 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
   const isOutOfRange = lockedInNumber !== null && !isInRange
 
   const handleRevealClick = () => {
-    if (hasPin) {
-      setShowPinInput(true)
+    if (hasPin || needsAnswerOnReveal) {
+      setShowRevealForm(true)
     } else {
       setShowRevealDialog(true)
     }
   }
 
   const handleReveal = async () => {
+    setRevealError(null)
+
     if (hasPin && pinInput !== question.reveal_pin) {
       setPinError(true)
       return
     }
 
-    await supabase
+    // If the question doesn't have an answer yet, the revealer must supply one.
+    let answerToWrite: number | null = trueAnswer
+    if (needsAnswerOnReveal) {
+      const parsed = revealAnswerInput.trim() ? parseFloat(revealAnswerInput) : NaN
+      if (isNaN(parsed)) {
+        setRevealError('Please enter a valid answer')
+        return
+      }
+      if (question.min_value !== null && parsed < question.min_value) {
+        setRevealError(`Answer must be at least ${question.min_value}`)
+        return
+      }
+      if (question.max_value !== null && parsed > question.max_value) {
+        setRevealError(`Answer must be at most ${question.max_value}`)
+        return
+      }
+      answerToWrite = parsed
+    }
+
+    const updates: { revealed_at: string; true_answer?: number } = {
+      revealed_at: new Date().toISOString(),
+    }
+    if (needsAnswerOnReveal && answerToWrite !== null) {
+      updates.true_answer = answerToWrite
+    }
+
+    const { error } = await supabase
       .from('simple_questions')
-      .update({ revealed_at: new Date().toISOString() })
+      .update(updates)
       .eq('id', question.id)
 
+    if (error) {
+      setRevealError('Failed to reveal answer')
+      return
+    }
+
+    if (answerToWrite !== null) {
+      setTrueAnswer(answerToWrite)
+    }
     setRevealed(true)
     setShowAnswer(true) // User revealed it, so show the answer
-    setShowPinInput(false)
+    setShowRevealForm(false)
     setShowRevealDialog(false)
+    setRevealAnswerInput('')
+    setPinInput('')
   }
 
   const handleSeeGuesses = () => {
@@ -355,27 +401,31 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
   }
 
   // Computed values for results display
-  const guessesByDistance = [...guesses].sort((a, b) =>
-    Math.abs(a.value - question.true_answer) - Math.abs(b.value - question.true_answer)
-  )
+  const guessesByDistance = trueAnswer === null
+    ? [...guesses]
+    : [...guesses].sort((a, b) =>
+        Math.abs(a.value - trueAnswer) - Math.abs(b.value - trueAnswer)
+      )
   // For closest guess, only consider pre-reveal guesses (only relevant when showing answer)
   const preRevealGuesses = guessesByDistance.filter(g => !isGuessAfterReveal(g))
   const closestGuess = preRevealGuesses[0] || null
-  const closestGuessId = revealed && showAnswer && closestGuess ? closestGuess.id : null
+  const shouldShowAnswer = revealed && showAnswer && trueAnswer !== null
+  const closestGuessId = shouldShowAnswer && closestGuess ? closestGuess.id : null
 
   // Build table rows - either sorted by magnitude (interleaved with answer) or by distance
   type TableRow = { type: 'guess'; guess: SimpleGuess } | { type: 'answer' }
-  const shouldShowAnswer = revealed && showAnswer
 
   // Ratio distance: how far off multiplicatively (e.g. 2x off in either direction)
   const getRatio = (guess: SimpleGuess) => {
-    const answer = question.true_answer
-    if (answer === 0 && guess.value === 0) return 1
-    if (answer === 0 || guess.value === 0) return Infinity
-    return Math.max(guess.value / answer, answer / guess.value)
+    if (trueAnswer === null) return Infinity
+    if (trueAnswer === 0 && guess.value === 0) return 1
+    if (trueAnswer === 0 || guess.value === 0) return Infinity
+    return Math.max(guess.value / trueAnswer, trueAnswer / guess.value)
   }
 
-  const guessesByRatio = [...guesses].sort((a, b) => getRatio(a) - getRatio(b))
+  const guessesByRatio = trueAnswer === null
+    ? [...guesses]
+    : [...guesses].sort((a, b) => getRatio(a) - getRatio(b))
 
   const tableRows: TableRow[] = (() => {
     if (sortMode === 'distance') {
@@ -397,7 +447,7 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
       let answerInserted = false
 
       for (const guess of guessesByValue) {
-        if (shouldShowAnswer && !answerInserted && guess.value >= question.true_answer) {
+        if (shouldShowAnswer && !answerInserted && guess.value >= trueAnswer) {
           rows.push({ type: 'answer' })
           answerInserted = true
         }
@@ -519,11 +569,11 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
               )
             })}
 
-            {/* True answer - only when showResults AND revealed AND showAnswer */}
-            {showResults && revealed && showAnswer && (
+            {/* True answer - only when showResults AND revealed AND showAnswer AND answer is set */}
+            {showResults && shouldShowAnswer && (
               <div
                 className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 ${answerHovered ? 'z-30' : 'z-10'}`}
-                style={{ left: `${getPositionFromValue(question.true_answer)}%` }}
+                style={{ left: `${getPositionFromValue(trueAnswer!)}%` }}
                 onMouseEnter={() => setAnswerHovered(true)}
                 onMouseLeave={() => setAnswerHovered(false)}
               >
@@ -532,7 +582,7 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
                 </div>
                 <div className="w-4 h-4 bg-green-500 rotate-45 shadow-lg shadow-green-500/30 ring-2 ring-green-400/50" />
                 <div className={`absolute top-full mt-2 left-1/2 -translate-x-1/2 text-sm font-bold text-green-500 whitespace-nowrap ${answerHovered ? 'bg-zinc-900 px-2 rounded' : ''}`}>
-                  {formatValue(question.true_answer)}
+                  {formatValue(trueAnswer!)}
                 </div>
               </div>
             )}
@@ -692,26 +742,52 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
 
         {/* Reveal Answer button - only when not revealed */}
         {!revealed && (
-          <div className="flex items-center justify-center gap-2">
-            {showPinInput ? (
+          <div className="flex flex-col items-center justify-center gap-2">
+            {showRevealForm ? (
               <>
-                <Input
-                  type="text"
-                  placeholder="Enter PIN"
-                  value={pinInput}
-                  onChange={(e) => {
-                    setPinInput(e.target.value.toLowerCase())
-                    setPinError(false)
-                  }}
-                  className={`w-32 text-center font-mono ${pinError ? 'border-destructive' : ''}`}
-                  maxLength={6}
-                />
-                <Button onClick={handleReveal}>
-                  Reveal
-                </Button>
-                <Button variant="ghost" onClick={() => setShowPinInput(false)}>
-                  Cancel
-                </Button>
+                <div className="flex items-center justify-center gap-2 flex-wrap">
+                  {needsAnswerOnReveal && (
+                    <Input
+                      type="number"
+                      placeholder="Answer"
+                      value={revealAnswerInput}
+                      onChange={(e) => {
+                        setRevealAnswerInput(e.target.value)
+                        setRevealError(null)
+                      }}
+                      className="w-32 text-center font-mono"
+                    />
+                  )}
+                  {hasPin && (
+                    <Input
+                      type="text"
+                      placeholder="Enter PIN"
+                      value={pinInput}
+                      onChange={(e) => {
+                        setPinInput(e.target.value.toLowerCase())
+                        setPinError(false)
+                      }}
+                      className={`w-32 text-center font-mono ${pinError ? 'border-destructive' : ''}`}
+                      maxLength={6}
+                    />
+                  )}
+                  <Button onClick={handleReveal}>
+                    Reveal
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    onClick={() => {
+                      setShowRevealForm(false)
+                      setRevealError(null)
+                      setPinError(false)
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+                {revealError && (
+                  <p className="text-destructive text-sm">{revealError}</p>
+                )}
               </>
             ) : (
               <Button variant="outline" onClick={handleRevealClick}>
@@ -746,11 +822,11 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
         {/* Results table - visible when showResults */}
         {showResults && (
           <div className="space-y-4">
-            {/* Answer summary - only when revealed AND showAnswer */}
-            {revealed && showAnswer && (
+            {/* Answer summary - only when revealed AND showAnswer AND answer is set */}
+            {shouldShowAnswer && (
               <div className="space-y-1">
                 <p className="text-green-500 font-medium">
-                  Answer: {formatValueWithUnit(question.true_answer)}
+                  Answer: {formatValueWithUnit(trueAnswer!)}
                 </p>
                 {closestGuess && (
                   <p className="text-white font-medium">
@@ -796,7 +872,7 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
                           <tr key="answer" className="text-green-500 font-bold border-t border-muted-foreground/20">
                             <td className="py-1.5 px-2 text-left">Answer</td>
                             <td className="py-1.5 px-2 text-right tabular-nums">
-                              {formatValueWithUnit(question.true_answer)}
+                              {formatValueWithUnit(trueAnswer!)}
                             </td>
                             {shouldShowAnswer && sortMode !== 'magnitude' && (
                               <td className="py-1.5 px-2 text-right tabular-nums w-16"></td>
@@ -840,7 +916,7 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
                               {shouldShowAnswer && sortMode !== 'magnitude' && (
                                 <td className={`py-1.5 px-2 text-right tabular-nums text-xs w-16 ${textClass}`}>
                                   {sortMode === 'distance'
-                                    ? `${guess.value >= question.true_answer ? '+' : '\u2212'}${formatWithCommas(Math.abs(guess.value - question.true_answer))}`
+                                    ? `${guess.value >= trueAnswer! ? '+' : '\u2212'}${formatWithCommas(Math.abs(guess.value - trueAnswer!))}`
                                     : `${getRatio(guess) === Infinity ? '\u221E' : getRatio(guess).toFixed(2)}x`
                                   }
                                 </td>

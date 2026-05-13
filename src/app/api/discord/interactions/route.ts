@@ -197,7 +197,7 @@ export async function POST(request: Request) {
       description: options.description as string | undefined,
       minValue: options.min as number | undefined,
       maxValue: options.max as number | undefined,
-      trueAnswer: options.answer as number,
+      trueAnswer: options.answer as number | undefined,
       revealPin: options.pin as string | undefined,
       unit: options.unit as string | undefined,
       isCurrency: options.currency as boolean | undefined,
@@ -274,11 +274,13 @@ export async function POST(request: Request) {
     const questionInput = (options.question as string).trim()
     const questionId = questionInput.replace(/.*\/q\//, '').slice(0, 7)
 
-    // Try to reveal (creator can bypass PIN)
+    // Try to reveal (creator can bypass PIN). Caller may also supply the answer
+    // if the question was created without one.
     const revealResult = await revealAnswer({
       questionId,
       pin: (options.pin as string)?.toLowerCase(),
       discordUserId,
+      trueAnswer: options.answer as number | undefined,
     })
 
     if (!revealResult.success) {
@@ -455,30 +457,49 @@ export async function POST(request: Request) {
       // Check if user is the creator (can bypass PIN)
       const isCreator = discordUserId && q.discordUserId && discordUserId === q.discordUserId
 
-      // If has PIN and user is not creator, show modal to enter PIN
-      if (q.hasPin && !isCreator) {
+      // Determine whether the reveal needs a modal (answer not set, or PIN required and caller isn't creator).
+      const needsAnswer = !q.hasAnswer
+      const needsPin = q.hasPin && !isCreator
+      if (needsAnswer || needsPin) {
+        const components: Array<{ type: 1; components: Array<{ type: 4; custom_id: string; label: string; style: number; required: boolean; placeholder?: string; max_length?: number }> }> = []
+        if (needsAnswer) {
+          components.push({
+            type: 1,
+            components: [{
+              type: 4,
+              custom_id: "answer_value",
+              label: "Answer",
+              style: 1,
+              required: true,
+              placeholder: "The true answer"
+            }]
+          })
+        }
+        if (needsPin) {
+          components.push({
+            type: 1,
+            components: [{
+              type: 4,
+              custom_id: "pin_value",
+              label: "PIN",
+              style: 1,
+              required: true,
+              placeholder: "Enter the 6-character PIN",
+              max_length: 6
+            }]
+          })
+        }
         return Response.json({
           type: MODAL,
           data: {
-            custom_id: `revealpin_${questionId}`,
-            title: "Enter PIN to Reveal",
-            components: [{
-              type: 1,
-              components: [{
-                type: 4,
-                custom_id: "pin_value",
-                label: "PIN",
-                style: 1,
-                required: true,
-                placeholder: "Enter the 6-character PIN",
-                max_length: 6
-              }]
-            }]
+            custom_id: `revealform_${questionId}`,
+            title: needsAnswer ? "Reveal Answer" : "Enter PIN to Reveal",
+            components
           }
         })
       }
 
-      // No PIN (or creator bypassing PIN) - reveal directly
+      // No PIN needed and answer already set - reveal directly
       const revealResult = await revealAnswer({ questionId, discordUserId })
       if (!revealResult.success) {
         return Response.json({
@@ -656,20 +677,36 @@ export async function POST(request: Request) {
       })
     }
 
-    // Handle PIN reveal modal
-    if (customId.startsWith('revealpin_')) {
-      const questionId = customId.replace('revealpin_', '')
+    // Handle reveal modal (may include answer, pin, or both)
+    if (customId.startsWith('revealform_') || customId.startsWith('revealpin_')) {
+      const questionId = customId.replace(/^reveal(form|pin)_/, '')
 
       // Get Discord user ID
       const discordUserId = interaction.member?.user?.id || interaction.user?.id
 
-      // Extract PIN value
+      // Extract any provided field values
       const fields = interaction.data.components.flatMap(
         (row: { components: Array<{ custom_id: string; value: string }> }) => row.components
       )
       const pin = fields.find((f: { custom_id: string }) => f.custom_id === 'pin_value')?.value
+      const answerStr = fields.find((f: { custom_id: string }) => f.custom_id === 'answer_value')?.value
+      const parsedAnswer = answerStr !== undefined && answerStr.trim() !== '' ? parseFloat(answerStr) : undefined
+      if (parsedAnswer !== undefined && isNaN(parsedAnswer)) {
+        return Response.json({
+          type: CHANNEL_MESSAGE,
+          data: {
+            content: "❌ Please enter a valid number for the answer",
+            flags: EPHEMERAL
+          }
+        })
+      }
 
-      const revealResult = await revealAnswer({ questionId, pin: pin?.toLowerCase(), discordUserId })
+      const revealResult = await revealAnswer({
+        questionId,
+        pin: pin?.toLowerCase(),
+        discordUserId,
+        trueAnswer: parsedAnswer,
+      })
       if (!revealResult.success) {
         return Response.json({
           type: CHANNEL_MESSAGE,

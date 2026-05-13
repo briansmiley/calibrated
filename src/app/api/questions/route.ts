@@ -5,12 +5,16 @@ export async function POST(request: Request) {
   try {
     const body = await request.json()
 
+    const rawMin = body.minValue ?? body.min
+    const rawMax = body.maxValue ?? body.max
+    const rawAnswer = body.trueAnswer ?? body.answer
+
     const input: CreateQuestionInput = {
       title: body.title,
       description: body.description,
-      minValue: Number(body.minValue ?? body.min),
-      maxValue: Number(body.maxValue ?? body.max),
-      trueAnswer: Number(body.trueAnswer ?? body.answer),
+      minValue: rawMin === undefined || rawMin === null ? null : Number(rawMin),
+      maxValue: rawMax === undefined || rawMax === null ? null : Number(rawMax),
+      trueAnswer: rawAnswer === undefined || rawAnswer === null ? null : Number(rawAnswer),
       revealPin: body.revealPin ?? body.pin,
     }
 

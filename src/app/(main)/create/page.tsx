@@ -62,9 +62,9 @@ export default function CreateSimplePage() {
 
     const min = minValue.trim() ? parseFloat(minValue) : null
     const max = maxValue.trim() ? parseFloat(maxValue) : null
-    const answer = parseFloat(trueAnswer)
+    const answer = trueAnswer.trim() ? parseFloat(trueAnswer) : null
 
-    if (isNaN(answer)) {
+    if (answer !== null && isNaN(answer)) {
       setError('Please enter a valid answer')
       return
     }
@@ -84,12 +84,12 @@ export default function CreateSimplePage() {
       return
     }
 
-    if (min !== null && answer < min) {
+    if (answer !== null && min !== null && answer < min) {
       setError('Answer must be at least min value')
       return
     }
 
-    if (max !== null && answer > max) {
+    if (answer !== null && max !== null && answer > max) {
       setError('Answer must be at most max value')
       return
     }
@@ -121,7 +121,7 @@ export default function CreateSimplePage() {
     router.push(`/q/${shortId}`)
   }
 
-  const isValid = title.trim() && trueAnswer && (!useLock || pin)
+  const isValid = title.trim() && (!useLock || pin)
 
   return (
     <div className="mx-auto max-w-xl py-12 px-4">
@@ -166,7 +166,7 @@ export default function CreateSimplePage() {
           <Input
             variant="underline"
             type="number"
-            placeholder="Answer *"
+            placeholder="Answer"
             value={trueAnswer}
             onChange={(e) => setTrueAnswer(e.target.value)}
             className="w-32"

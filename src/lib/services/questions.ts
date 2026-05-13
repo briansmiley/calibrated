@@ -10,7 +10,7 @@ export type CreateQuestionInput = {
   description?: string
   minValue?: number | null
   maxValue?: number | null
-  trueAnswer: number
+  trueAnswer?: number | null
   unit?: string
   isCurrency?: boolean
   revealPin?: string
@@ -35,6 +35,7 @@ export type GetQuestionResult =
           revealed: boolean
           revealedAt: string | null
           trueAnswer: number | null // Only included if revealed
+          hasAnswer: boolean // Whether the question has a stored answer (may be hidden pre-reveal)
           unit: string | null
           isCurrency: boolean
           hasPin: boolean
@@ -66,6 +67,7 @@ export type RevealAnswerInput = {
   questionId: string // Can be short ID or full ID
   pin?: string
   discordUserId?: string // If provided and matches creator, bypasses PIN
+  trueAnswer?: number // Required if the question has no answer yet
 }
 
 export type RevealAnswerResult =
@@ -124,9 +126,10 @@ export async function createQuestion(
     return { success: false, error: 'Title is required' }
   }
 
-  if (isNaN(input.trueAnswer)) {
-    return { success: false, error: 'Invalid answer value' }
-  }
+  const trueAnswer =
+    input.trueAnswer === undefined || input.trueAnswer === null || isNaN(input.trueAnswer)
+      ? null
+      : input.trueAnswer
 
   const minValue = input.minValue ?? null
   const maxValue = input.maxValue ?? null
@@ -136,12 +139,12 @@ export async function createQuestion(
     return { success: false, error: 'Min must be less than max' }
   }
 
-  // Validate answer against provided bounds
-  if (minValue !== null && input.trueAnswer < minValue) {
+  // Validate answer against provided bounds (only when answer is provided)
+  if (trueAnswer !== null && minValue !== null && trueAnswer < minValue) {
     return { success: false, error: 'Answer must be at least min value' }
   }
 
-  if (maxValue !== null && input.trueAnswer > maxValue) {
+  if (trueAnswer !== null && maxValue !== null && trueAnswer > maxValue) {
     return { success: false, error: 'Answer must be at most max value' }
   }
 
@@ -154,7 +157,7 @@ export async function createQuestion(
       description: input.description?.trim() || null,
       min_value: minValue,
       max_value: maxValue,
-      true_answer: input.trueAnswer,
+      true_answer: trueAnswer,
       unit: input.unit?.trim() || null,
       is_currency: input.isCurrency ?? false,
       reveal_pin: input.revealPin || null,
@@ -213,6 +216,7 @@ export async function getQuestion(questionId: string): Promise<GetQuestionResult
         revealed,
         revealedAt,
         trueAnswer: revealed ? question.true_answer : null,
+        hasAnswer: question.true_answer !== null,
         unit: question.unit,
         isCurrency: question.is_currency,
         hasPin: question.reveal_pin !== null,
@@ -292,8 +296,8 @@ export async function revealAnswer(
 
   const question = resolved.question
 
-  // Already revealed
-  if (question.revealed_at !== null) {
+  // Already revealed — return the stored answer (must be non-null since reveal sets it).
+  if (question.revealed_at !== null && question.true_answer !== null) {
     return {
       success: true,
       data: { trueAnswer: question.true_answer },
@@ -315,11 +319,35 @@ export async function revealAnswer(
     }
   }
 
+  // Determine the answer to use: existing answer wins; otherwise the caller must supply one.
+  let answer: number
+  if (question.true_answer !== null) {
+    answer = question.true_answer
+  } else if (input.trueAnswer !== undefined && !isNaN(input.trueAnswer)) {
+    // Validate against bounds if set
+    if (question.min_value !== null && input.trueAnswer < question.min_value) {
+      return { success: false, error: `Answer must be at least ${question.min_value}` }
+    }
+    if (question.max_value !== null && input.trueAnswer > question.max_value) {
+      return { success: false, error: `Answer must be at most ${question.max_value}` }
+    }
+    answer = input.trueAnswer
+  } else {
+    return { success: false, error: 'Answer required to reveal this question' }
+  }
+
   const supabase = await createClient()
+
+  const updates: { revealed_at: string; true_answer?: number } = {
+    revealed_at: new Date().toISOString(),
+  }
+  if (question.true_answer === null) {
+    updates.true_answer = answer
+  }
 
   const { error } = await supabase
     .from('simple_questions')
-    .update({ revealed_at: new Date().toISOString() })
+    .update(updates)
     .eq('id', question.id)
 
   if (error) {
@@ -328,6 +356,6 @@ export async function revealAnswer(
 
   return {
     success: true,
-    data: { trueAnswer: question.true_answer },
+    data: { trueAnswer: answer },
   }
 }
