@@ -31,6 +31,8 @@ curl -X POST "https://discord.com/api/v10/applications/YOUR_APP_ID/commands" \
       {"name": "answer", "description": "The true answer (optional — supply at /reveal if omitted)", "type": 10, "required": false},
       {"name": "min", "description": "Minimum value for guesses (optional)", "type": 10, "required": false},
       {"name": "max", "description": "Maximum value for guesses (optional)", "type": 10, "required": false},
+      {"name": "unit", "description": "Unit label (optional)", "type": 3, "required": false},
+      {"name": "currency", "description": "Treat unit as currency prefix (optional)", "type": 5, "required": false},
       {"name": "description", "description": "Additional context (optional)", "type": 3, "required": false}
     ]
   }'
@@ -53,7 +55,7 @@ curl -X POST "https://discord.com/api/v10/applications/YOUR_APP_ID/commands" \
   }'
 ```
 
-Option types: `3` = string, `10` = number
+Option types: `3` = string, `5` = boolean, `10` = number
 
 ## 4. Set Interactions Endpoint
 
