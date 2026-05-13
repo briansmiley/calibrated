@@ -115,11 +115,13 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
     ...guesses.map(g => g.value),
     ...(revealed && showAnswer && trueAnswer !== null ? [trueAnswer] : [])
   ]
-  const { leftBound, rightBound, hasData } = calculateBounds(
+  const { leftBound, rightBound } = calculateBounds(
     question.min_value,
     question.max_value,
     dataPoints
   )
+  const hasExplicitBounds = question.min_value !== null || question.max_value !== null
+  const noRangeStub = !hasExplicitBounds && !showResults
 
   // Load saved name from localStorage on mount
   useEffect(() => {
@@ -495,14 +497,15 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
             <div className="absolute top-1/2 right-0 w-1 h-8 bg-muted-foreground/50 -translate-y-1/2" />
           )}
 
-          {/* Empty state - no data and no bounds */}
-          {!hasData && question.min_value === null && question.max_value === null && !showResults && (
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-3xl text-muted-foreground/50">
-              ?
+          {/* No-range stub label - replaces interactive area when no bounds and no guess submitted */}
+          {noRangeStub && (
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-base italic text-muted-foreground/50 bg-background px-2">
+              No range provided
             </div>
           )}
 
-          {/* Interactive dot area */}
+          {/* Interactive dot area - omitted in no-range stub state */}
+          {!noRangeStub && (
           <div
             ref={lineRef}
             className={`absolute inset-y-0 left-0.5 right-0.5 ${!showResults ? 'cursor-crosshair' : ''} touch-none`}
@@ -587,6 +590,7 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
               </div>
             )}
           </div>
+          )}
         </div>
 
         {/* Range labels - only show when explicit bounds exist */}
