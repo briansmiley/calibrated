@@ -6,7 +6,7 @@ import { SimpleQuestion, SimpleGuess } from '@/types/database'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
-import { FaLock, FaCheck, FaPlus, FaEye, FaSortAmountDown, FaSortNumericDown, FaPercent } from 'react-icons/fa'
+import { FaLock, FaCheck, FaPlus, FaEye, FaSortAmountDown, FaSortNumericDown, FaPercent, FaDiscord } from 'react-icons/fa'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -741,7 +741,23 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
         )}
 
         {/* Reveal Answer button - only when not revealed */}
-        {!revealed && (
+        {!revealed && question.discord_user_id !== null && (
+          <Tooltip clickable>
+            <TooltipTrigger asChild>
+              <span>
+                <Button variant="outline" disabled>
+                  <FaDiscord className="mr-2 h-3.5 w-3.5 text-[#5865F2]" />
+                  Reveal Answer
+                </Button>
+              </span>
+            </TooltipTrigger>
+            <TooltipContent>
+              This question was created in Discord. Only its Discord creator can reveal it, from inside Discord.
+            </TooltipContent>
+          </Tooltip>
+        )}
+
+        {!revealed && question.discord_user_id === null && (
           <div className="flex flex-col items-center justify-center gap-2">
             {showRevealForm ? (
               <>
