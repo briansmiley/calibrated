@@ -31,7 +31,6 @@ curl -X POST "https://discord.com/api/v10/applications/YOUR_APP_ID/commands" \
       {"name": "answer", "description": "The true answer (optional — supply at /reveal if omitted)", "type": 10, "required": false},
       {"name": "min", "description": "Minimum value for guesses (optional)", "type": 10, "required": false},
       {"name": "max", "description": "Maximum value for guesses (optional)", "type": 10, "required": false},
-      {"name": "pin", "description": "PIN to protect reveal (optional)", "type": 3, "required": false},
       {"name": "description", "description": "Additional context (optional)", "type": 3, "required": false}
     ]
   }'
@@ -49,8 +48,7 @@ curl -X POST "https://discord.com/api/v10/applications/YOUR_APP_ID/commands" \
     "type": 1,
     "options": [
       {"name": "question", "description": "Question ID or URL (e.g. abc1234 or calibrated.live/q/abc1234)", "type": 3, "required": true},
-      {"name": "answer", "description": "Required if the question was created without one", "type": 10, "required": false},
-      {"name": "pin", "description": "PIN if the question is protected", "type": 3, "required": false}
+      {"name": "answer", "description": "Required if the question was created without one", "type": 10, "required": false}
     ]
   }'
 ```
