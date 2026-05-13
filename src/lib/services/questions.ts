@@ -304,6 +304,13 @@ export async function revealAnswer(
     }
   }
 
+  // Discord-created questions can only be revealed by their Discord creator.
+  if (question.discord_user_id !== null) {
+    if (!input.discordUserId || input.discordUserId !== question.discord_user_id) {
+      return { success: false, error: 'Only the Discord creator can reveal this question' }
+    }
+  }
+
   // Check if caller is the creator (Discord user ID match bypasses PIN)
   const isCreator = input.discordUserId &&
     question.discord_user_id &&
