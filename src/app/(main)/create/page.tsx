@@ -7,6 +7,16 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { FaLock, FaLockOpen, FaPlus, FaQuestionCircle, FaRegCopy } from 'react-icons/fa'
 
 function generatePin(): string {
@@ -36,6 +46,12 @@ export default function CreateSimplePage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
+  const [showNoPinWarning, setShowNoPinWarning] = useState(false)
+  const [parsedValues, setParsedValues] = useState<{
+    min: number | null
+    max: number | null
+    answer: number | null
+  } | null>(null)
 
   const handleCopyPin = async () => {
     await navigator.clipboard.writeText(pin)
@@ -52,7 +68,7 @@ export default function CreateSimplePage() {
     setUseLock(!useLock)
   }
 
-  const handleCreate = async () => {
+  const handleCreate = () => {
     setError(null)
 
     if (!title.trim()) {
@@ -94,6 +110,22 @@ export default function CreateSimplePage() {
       return
     }
 
+    const parsed = { min, max, answer }
+    setParsedValues(parsed)
+
+    if (!useLock) {
+      setShowNoPinWarning(true)
+      return
+    }
+
+    void confirmCreate(parsed)
+  }
+
+  const confirmCreate = async (
+    parsed: { min: number | null; max: number | null; answer: number | null } | null = parsedValues
+  ) => {
+    if (!parsed) return
+
     setLoading(true)
 
     const { data, error: insertError } = await supabase
@@ -101,9 +133,9 @@ export default function CreateSimplePage() {
       .insert({
         title: title.trim(),
         description: description.trim() || null,
-        min_value: min,
-        max_value: max,
-        true_answer: answer,
+        min_value: parsed.min,
+        max_value: parsed.max,
+        true_answer: parsed.answer,
         unit: unit.trim() || null,
         is_currency: isCurrency,
         reveal_pin: useLock && pin ? pin : null,
@@ -290,6 +322,29 @@ export default function CreateSimplePage() {
           </p>
         )}
       </div>
+
+      <AlertDialog open={showNoPinWarning} onOpenChange={setShowNoPinWarning}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {trueAnswer.trim()
+                ? 'Create without a PIN?'
+                : 'Create without a PIN or answer?'}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {trueAnswer.trim()
+                ? 'Without a PIN, anyone with the link can reveal the answer to everyone. Note: viewers can still submit a guess before opting to see the answer, even after a reveal.'
+                : 'Without a PIN, anyone with the link can reveal this question and write any answer they choose. Note: viewers can still submit a guess before opting to see the answer, even after a reveal.'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => confirmCreate()}>
+              Create anyway
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
