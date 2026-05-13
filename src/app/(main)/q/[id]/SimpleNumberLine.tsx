@@ -120,6 +120,8 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
     question.max_value,
     dataPoints
   )
+  const hasExplicitBounds = question.min_value !== null || question.max_value !== null
+  const hideNumberLine = !hasExplicitBounds && !showResults
 
   // Load saved name from localStorage on mount
   useEffect(() => {
@@ -483,6 +485,8 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
 
       {/* Number line container */}
       <div className="py-12">
+        {!hideNumberLine && (
+        <>
         <div className="relative h-24">
           {/* The line */}
           <div className="absolute top-1/2 left-0 right-0 h-1 bg-muted-foreground/30 -translate-y-1/2" />
@@ -613,6 +617,8 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
               <span />
             )}
           </div>
+        )}
+        </>
         )}
 
         {/* Guess input - visible when NOT in results view */}
