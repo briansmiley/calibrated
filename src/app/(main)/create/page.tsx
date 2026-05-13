@@ -331,11 +331,24 @@ export default function CreateSimplePage() {
                 ? 'Create without a PIN?'
                 : 'Create without a PIN or answer?'}
             </AlertDialogTitle>
-            <AlertDialogDescription>
-              {trueAnswer.trim()
-                ? 'Without a PIN, anyone with the link can reveal the answer to everyone. Note: viewers can still submit a guess before opting to see the answer, even after a reveal.'
-                : 'Without a PIN, anyone with the link can reveal this question and write any answer they choose. Note: viewers can still submit a guess before opting to see the answer, even after a reveal.'}
-            </AlertDialogDescription>
+            {trueAnswer.trim() ? (
+              <AlertDialogDescription>
+                Anyone with the link can reveal the answer to everyone. Even after the answer is revealed, viewers will still be able to guess before opting to see it.
+              </AlertDialogDescription>
+            ) : (
+              <>
+                <AlertDialogDescription>
+                  Anyone with the link can:
+                </AlertDialogDescription>
+                <ul className="list-disc pl-6 text-sm text-muted-foreground">
+                  <li>set the answer to anything they choose</li>
+                  <li>set the status to revealed</li>
+                </ul>
+                <p className="text-sm text-muted-foreground">
+                  Even after an answer is set/revealed, viewers will still be able to guess before opting to see it.
+                </p>
+              </>
+            )}
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
