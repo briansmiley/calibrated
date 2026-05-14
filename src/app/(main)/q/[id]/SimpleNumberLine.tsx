@@ -106,6 +106,7 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
   const [showRevealDialog, setShowRevealDialog] = useState(false)
   const [showSeeGuessesDialog, setShowSeeGuessesDialog] = useState(false)
   const [sortMode, setSortMode] = useState<'magnitude' | 'distance' | 'ratio'>('magnitude')
+  const [submitting, setSubmitting] = useState(false)
 
   const hasPin = question.reveal_pin !== null
   const needsAnswerOnReveal = trueAnswer === null
@@ -168,10 +169,10 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
         },
         (payload) => {
           const updated = payload.new as SimpleQuestion
-          if (updated.revealed_at !== null) {
+          if (typeof updated.revealed_at === 'string') {
             setRevealed(true)
           }
-          if (updated.true_answer !== null) {
+          if (typeof updated.true_answer === 'number') {
             setTrueAnswer(updated.true_answer)
           }
         }
@@ -320,6 +321,7 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
   }
 
   const handleReveal = async () => {
+    if (submitting) return
     setRevealError(null)
 
     if (hasPin && pinInput !== question.reveal_pin) {
@@ -353,25 +355,30 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
       updates.true_answer = answerToWrite
     }
 
-    const { error } = await supabase
-      .from('simple_questions')
-      .update(updates)
-      .eq('id', question.id)
+    setSubmitting(true)
+    try {
+      const { error } = await supabase
+        .from('simple_questions')
+        .update(updates)
+        .eq('id', question.id)
 
-    if (error) {
-      setRevealError('Failed to reveal answer')
-      return
-    }
+      if (error) {
+        setRevealError('Failed to reveal answer')
+        return
+      }
 
-    if (answerToWrite !== null) {
-      setTrueAnswer(answerToWrite)
+      if (answerToWrite !== null) {
+        setTrueAnswer(answerToWrite)
+      }
+      setRevealed(true)
+      setShowAnswer(true) // User revealed it, so show the answer
+      setShowRevealForm(false)
+      setShowRevealDialog(false)
+      setRevealAnswerInput('')
+      setPinInput('')
+    } finally {
+      setSubmitting(false)
     }
-    setRevealed(true)
-    setShowAnswer(true) // User revealed it, so show the answer
-    setShowRevealForm(false)
-    setShowRevealDialog(false)
-    setRevealAnswerInput('')
-    setPinInput('')
   }
 
   const handleSeeGuesses = () => {
@@ -576,7 +583,7 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
             {showResults && shouldShowAnswer && (
               <div
                 className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 ${answerHovered ? 'z-30' : 'z-10'}`}
-                style={{ left: `${getPositionFromValue(trueAnswer!)}%` }}
+                style={{ left: `${getPositionFromValue(trueAnswer)}%` }}
                 onMouseEnter={() => setAnswerHovered(true)}
                 onMouseLeave={() => setAnswerHovered(false)}
               >
@@ -585,7 +592,7 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
                 </div>
                 <div className="w-4 h-4 bg-green-500 rotate-45 shadow-lg shadow-green-500/30 ring-2 ring-green-400/50" />
                 <div className={`absolute top-full mt-2 left-1/2 -translate-x-1/2 text-sm font-bold text-green-500 whitespace-nowrap ${answerHovered ? 'bg-zinc-900 px-2 rounded' : ''}`}>
-                  {formatValue(trueAnswer!)}
+                  {formatValue(trueAnswer)}
                 </div>
               </div>
             )}
@@ -732,7 +739,7 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
         </div>
 
         {/* Show Results button - for questions already revealed, when user hasn't seen results yet */}
-        {revealed && !showResults && (
+        {revealed && !showResults && trueAnswer !== null && (
           <Button
             variant="outline"
             onClick={() => {
@@ -791,7 +798,7 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
                       maxLength={6}
                     />
                   )}
-                  <Button onClick={handleReveal}>
+                  <Button onClick={handleReveal} disabled={submitting}>
                     Reveal
                   </Button>
                   <Button
@@ -831,6 +838,7 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
               <AlertDialogCancel>Cancel</AlertDialogCancel>
               <AlertDialogAction
                 onClick={handleReveal}
+                disabled={submitting}
                 className="bg-red-500/80 hover:bg-red-500 text-white"
               >
                 Reveal Answer
@@ -846,7 +854,7 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
             {shouldShowAnswer && (
               <div className="space-y-1">
                 <p className="text-green-500 font-medium">
-                  Answer: {formatValueWithUnit(trueAnswer!)}
+                  Answer: {formatValueWithUnit(trueAnswer)}
                 </p>
                 {closestGuess && (
                   <p className="text-white font-medium">
@@ -936,7 +944,7 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
                               {shouldShowAnswer && sortMode !== 'magnitude' && (
                                 <td className={`py-1.5 px-2 text-right tabular-nums text-xs w-16 ${textClass}`}>
                                   {sortMode === 'distance'
-                                    ? `${guess.value >= trueAnswer! ? '+' : '\u2212'}${formatWithCommas(Math.abs(guess.value - trueAnswer!))}`
+                                    ? `${guess.value >= trueAnswer ? '+' : '\u2212'}${formatWithCommas(Math.abs(guess.value - trueAnswer))}`
                                     : `${getRatio(guess) === Infinity ? '\u221E' : getRatio(guess).toFixed(2)}x`
                                   }
                                 </td>
