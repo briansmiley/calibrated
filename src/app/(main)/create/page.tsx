@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -30,7 +29,6 @@ function generatePin(): string {
 
 export default function CreateSimplePage() {
   const router = useRouter()
-  const supabase = createClient()
 
   const [title, setTitle] = useState('')
   const [showDescription, setShowDescription] = useState(false)
@@ -128,28 +126,29 @@ export default function CreateSimplePage() {
 
     setLoading(true)
 
-    const { data, error: insertError } = await supabase
-      .from('simple_questions')
-      .insert({
+    const response = await fetch('/api/questions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
         title: title.trim(),
         description: description.trim() || null,
-        min_value: parsed.min,
-        max_value: parsed.max,
-        true_answer: parsed.answer,
-        unit: unit.trim() || null,
-        is_currency: isCurrency,
-        reveal_pin: useLock && pin ? pin : null,
-      })
-      .select()
-      .single()
+        minValue: parsed.min,
+        maxValue: parsed.max,
+        trueAnswer: parsed.answer,
+        unit,
+        isCurrency,
+        revealPin: useLock && pin ? pin : null,
+      }),
+    })
 
-    if (insertError || !data) {
-      setError('Failed to create question')
+    if (!response.ok) {
+      const { error: apiError } = await response.json().catch(() => ({ error: 'Failed to create question' }))
+      setError(apiError || 'Failed to create question')
       setLoading(false)
       return
     }
 
-    const shortId = data.id.slice(0, 7)
+    const { shortId } = await response.json()
     router.push(`/q/${shortId}`)
   }
 
