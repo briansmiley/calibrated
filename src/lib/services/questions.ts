@@ -311,13 +311,9 @@ export async function revealAnswer(
     }
   }
 
-  // Check if caller is the creator (Discord user ID match bypasses PIN)
-  const isCreator = input.discordUserId &&
-    question.discord_user_id &&
-    input.discordUserId === question.discord_user_id
-
-  // Check PIN if required (unless caller is creator)
-  if (question.reveal_pin !== null && !isCreator) {
+  // Check PIN if required. Discord-owned questions short-circuited above,
+  // so only non-Discord questions reach here.
+  if (question.reveal_pin !== null) {
     if (!input.pin) {
       return { success: false, error: 'PIN required (or ask the question creator to reveal)' }
     }

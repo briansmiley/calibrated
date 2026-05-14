@@ -21,6 +21,13 @@ const MODAL = 9
 const SUPPRESS_EMBEDS = 4
 const EPHEMERAL = 64
 
+function revealedComponents(shortId: string) {
+  return [{
+    type: 1,
+    components: [{ type: 2, style: 1, label: "Guess (before revealing!)", custom_id: `guess_${shortId}` }]
+  }]
+}
+
 // Helper to format range text for Discord messages
 function formatRangeText(
   minValue: number | null,
@@ -77,16 +84,19 @@ function formatRevealedMessage(
 
   const spoilerLines: string[] = []
 
-  // Format answer with units
-  let answerText: string
-  if (question.unit && question.isCurrency) {
-    answerText = `${question.unit}${question.trueAnswer}`
-  } else if (question.unit) {
-    answerText = `${question.trueAnswer} ${question.unit}`
+  if (question.trueAnswer !== null) {
+    let answerText: string
+    if (question.unit && question.isCurrency) {
+      answerText = `${question.unit}${question.trueAnswer}`
+    } else if (question.unit) {
+      answerText = `${question.trueAnswer} ${question.unit}`
+    } else {
+      answerText = `${question.trueAnswer}`
+    }
+    spoilerLines.push(`✓ Answer: ${answerText}`)
   } else {
-    answerText = `${question.trueAnswer}`
+    spoilerLines.push('No answer was recorded')
   }
-  spoilerLines.push(`✓ Answer: ${answerText}`)
 
   if (guesses.length > 0 && question.trueAnswer !== null) {
     spoilerLines.push('')
@@ -194,9 +204,9 @@ export async function POST(request: Request) {
     const result = await createQuestion({
       title: options.question as string,
       description: options.description as string | undefined,
-      minValue: options.min as number | undefined,
-      maxValue: options.max as number | undefined,
-      trueAnswer: options.answer as number | undefined,
+      minValue: typeof options.min === 'number' ? options.min : undefined,
+      maxValue: typeof options.max === 'number' ? options.max : undefined,
+      trueAnswer: typeof options.answer === 'number' ? options.answer : undefined,
       unit: options.unit as string | undefined,
       isCurrency: options.currency as boolean | undefined,
       discordUserId,
@@ -275,7 +285,7 @@ export async function POST(request: Request) {
     const revealResult = await revealAnswer({
       questionId,
       discordUserId,
-      trueAnswer: options.answer as number | undefined,
+      trueAnswer: typeof options.answer === 'number' ? options.answer : undefined,
     })
 
     if (!revealResult.success) {
@@ -315,17 +325,7 @@ export async function POST(request: Request) {
       data: {
         content,
         flags: SUPPRESS_EMBEDS,
-        components: [{
-          type: 1,
-          components: [
-            {
-              type: 2,
-              style: 1,
-              label: "Guess (before revealing!)",
-              custom_id: `guess_${q.shortId}`
-            }
-          ]
-        }]
+        components: revealedComponents(q.shortId)
       }
     })
   }
@@ -437,17 +437,7 @@ export async function POST(request: Request) {
           data: {
             content,
             flags: SUPPRESS_EMBEDS,
-            components: [{
-              type: 1,
-              components: [
-                {
-                  type: 2,
-                  style: 1,
-                  label: "Guess (before revealing!)",
-                  custom_id: `guess_${q.shortId}`
-                }
-              ]
-            }]
+            components: revealedComponents(q.shortId)
           }
         })
       }
@@ -510,17 +500,7 @@ export async function POST(request: Request) {
         data: {
           content,
           flags: SUPPRESS_EMBEDS,
-          components: [{
-            type: 1,
-            components: [
-              {
-                type: 2,
-                style: 1,
-                label: "Guess (before revealing!)",
-                custom_id: `guess_${updated.question.shortId}`
-              }
-            ]
-          }]
+          components: revealedComponents(updated.question.shortId)
         }
       })
     }
@@ -590,17 +570,7 @@ export async function POST(request: Request) {
               body: JSON.stringify({
                 content,
                 flags: SUPPRESS_EMBEDS,
-                components: [{
-                  type: 1,
-                  components: [
-                    {
-                      type: 2,
-                      style: 1,
-                      label: "Guess (before revealing!)",
-                      custom_id: `guess_${q.shortId}`
-                    }
-                  ]
-                }]
+                components: revealedComponents(q.shortId)
               })
             })
           } else {
@@ -714,17 +684,7 @@ export async function POST(request: Request) {
         data: {
           content,
           flags: SUPPRESS_EMBEDS,
-          components: [{
-            type: 1,
-            components: [
-              {
-                type: 2,
-                style: 1,
-                label: "Guess (before revealing!)",
-                custom_id: `guess_${updated.question.shortId}`
-              }
-            ]
-          }]
+          components: revealedComponents(updated.question.shortId)
         }
       })
     }
