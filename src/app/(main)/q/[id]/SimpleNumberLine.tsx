@@ -6,16 +6,7 @@ import { SimpleQuestion, SimpleGuess } from '@/types/database'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
-import { FaLock, FaCheck, FaPlus, FaEye, FaSortAmountDown, FaSortNumericDown, FaPercent, FaDiscord } from 'react-icons/fa'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuLabel,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
+import { FaLock, FaCheck, FaPlus, FaEye, FaSortUp, FaSortDown, FaDiscord } from 'react-icons/fa'
 import { IoIosLink } from 'react-icons/io'
 import { BsIncognito } from 'react-icons/bs'
 import { formatWithCommas } from '@/lib/format'
@@ -105,7 +96,8 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
   const [linkCopied, setLinkCopied] = useState(false)
   const [showRevealDialog, setShowRevealDialog] = useState(false)
   const [showSeeGuessesDialog, setShowSeeGuessesDialog] = useState(false)
-  const [sortMode, setSortMode] = useState<'magnitude' | 'distance' | 'ratio'>('magnitude')
+  type SortMode = 'magnitude-asc' | 'magnitude-desc' | 'name-asc' | 'name-desc' | 'distance' | 'ratio'
+  const [sortMode, setSortMode] = useState<SortMode>('magnitude-asc')
   const [submitting, setSubmitting] = useState(false)
 
   const hasPin = question.reveal_pin !== null
@@ -436,37 +428,57 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
     ? [...guesses]
     : [...guesses].sort((a, b) => getRatio(a) - getRatio(b))
 
-  const tableRows: TableRow[] = (() => {
-    if (sortMode === 'distance') {
-      const rows: TableRow[] = guessesByDistance.map(g => ({ type: 'guess' as const, guess: g }))
-      if (shouldShowAnswer) {
-        rows.unshift({ type: 'answer' })
-      }
-      return rows
-    } else if (sortMode === 'ratio') {
-      const rows: TableRow[] = guessesByRatio.map(g => ({ type: 'guess' as const, guess: g }))
-      if (shouldShowAnswer) {
-        rows.unshift({ type: 'answer' })
-      }
-      return rows
-    } else {
-      // Sort by magnitude - interleave answer with guesses
-      const guessesByValue = [...guesses].sort((a, b) => a.value - b.value)
-      const rows: TableRow[] = []
-      let answerInserted = false
+  const compareNames = (a: SimpleGuess, b: SimpleGuess) => {
+    const an = (a.name || '').toLowerCase()
+    const bn = (b.name || '').toLowerCase()
+    // Anonymous (empty name) sorts to the end
+    if (!an && bn) return 1
+    if (an && !bn) return -1
+    if (an < bn) return -1
+    if (an > bn) return 1
+    return 0
+  }
 
-      for (const guess of guessesByValue) {
-        if (shouldShowAnswer && !answerInserted && guess.value >= trueAnswer) {
+  const tableRows: TableRow[] = (() => {
+    if (sortMode === 'distance' && shouldShowAnswer) {
+      const rows: TableRow[] = guessesByDistance.map(g => ({ type: 'guess' as const, guess: g }))
+      rows.unshift({ type: 'answer' })
+      return rows
+    }
+    if (sortMode === 'ratio' && shouldShowAnswer) {
+      const rows: TableRow[] = guessesByRatio.map(g => ({ type: 'guess' as const, guess: g }))
+      rows.unshift({ type: 'answer' })
+      return rows
+    }
+    if (sortMode === 'name-asc' || sortMode === 'name-desc') {
+      const sorted = [...guesses].sort(compareNames)
+      if (sortMode === 'name-desc') sorted.reverse()
+      const rows: TableRow[] = sorted.map(g => ({ type: 'guess' as const, guess: g }))
+      if (shouldShowAnswer) rows.unshift({ type: 'answer' })
+      return rows
+    }
+    // Magnitude (asc or desc) - interleave answer with guesses at correct position
+    const ascending = sortMode !== 'magnitude-desc'
+    const guessesByValue = [...guesses].sort((a, b) => ascending ? a.value - b.value : b.value - a.value)
+    const rows: TableRow[] = []
+    let answerInserted = false
+
+    for (const guess of guessesByValue) {
+      if (shouldShowAnswer && !answerInserted && trueAnswer !== null) {
+        const reachedAnswer = ascending
+          ? guess.value >= trueAnswer
+          : guess.value <= trueAnswer
+        if (reachedAnswer) {
           rows.push({ type: 'answer' })
           answerInserted = true
         }
-        rows.push({ type: 'guess', guess })
       }
-      if (shouldShowAnswer && !answerInserted) {
-        rows.push({ type: 'answer' })
-      }
-      return rows
+      rows.push({ type: 'guess', guess })
     }
+    if (shouldShowAnswer && !answerInserted) {
+      rows.push({ type: 'answer' })
+    }
+    return rows
   })()
 
   return (
@@ -865,36 +877,49 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
             )}
 
             {/* Guesses table */}
-            {guesses.length > 0 && (
+            {guesses.length > 0 && (() => {
+              const diffMode: 'distance' | 'ratio' = sortMode === 'ratio' ? 'ratio' : 'distance'
+              const nameArrow = sortMode === 'name-asc' ? <FaSortUp className="inline h-3 w-3" /> : sortMode === 'name-desc' ? <FaSortDown className="inline h-3 w-3" /> : null
+              const magArrow = sortMode === 'magnitude-asc' ? <FaSortUp className="inline h-3 w-3" /> : sortMode === 'magnitude-desc' ? <FaSortDown className="inline h-3 w-3" /> : null
+              const diffArrow = (sortMode === 'distance' || sortMode === 'ratio') ? <FaSortUp className="inline h-3 w-3" /> : null
+
+              const headerBtn = 'inline-flex items-center gap-1 hover:text-foreground transition-colors'
+
+              return (
               <div>
-                {/* Sort dropdown */}
-                <div className="flex justify-end mb-2 max-w-xs mx-auto">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <button className="p-1.5 text-muted-foreground hover:text-foreground transition-colors">
-                        {sortMode === 'magnitude' ? (
-                          <FaSortNumericDown className="h-4 w-4" />
-                        ) : sortMode === 'distance' ? (
-                          <FaSortAmountDown className="h-4 w-4" />
-                        ) : (
-                          <FaPercent className="h-4 w-4" />
-                        )}
-                      </button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuLabel>Sort by</DropdownMenuLabel>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuRadioGroup value={sortMode} onValueChange={(v) => setSortMode(v as typeof sortMode)}>
-                        <DropdownMenuRadioItem value="magnitude">Magnitude</DropdownMenuRadioItem>
-                        <DropdownMenuRadioItem value="distance">Distance</DropdownMenuRadioItem>
-                        <DropdownMenuRadioItem value="ratio">Ratio</DropdownMenuRadioItem>
-                      </DropdownMenuRadioGroup>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
                 <table className="w-full max-w-xs mx-auto text-sm">
+                  <thead>
+                    <tr className="text-xs text-muted-foreground/70">
+                      <th className="py-1 px-2 text-left font-normal">
+                        <button
+                          onClick={() => setSortMode(sortMode === 'name-asc' ? 'name-desc' : 'name-asc')}
+                          className={headerBtn}
+                        >
+                          Name {nameArrow}
+                        </button>
+                      </th>
+                      <th className="py-1 px-2 text-right font-normal">
+                        <button
+                          onClick={() => setSortMode(sortMode === 'magnitude-asc' ? 'magnitude-desc' : 'magnitude-asc')}
+                          className={headerBtn}
+                        >
+                          Value {magArrow}
+                        </button>
+                      </th>
+                      {shouldShowAnswer && (
+                        <th className="py-1 px-2 text-right font-normal w-16">
+                          <button
+                            onClick={() => setSortMode(sortMode === 'distance' ? 'ratio' : 'distance')}
+                            className={headerBtn}
+                          >
+                            {diffMode === 'ratio' ? 'Ratio' : '\u0394'} {diffArrow}
+                          </button>
+                        </th>
+                      )}
+                    </tr>
+                  </thead>
                   <tbody>
-                    {tableRows.map((row, i) => {
+                    {tableRows.map((row) => {
                       if (row.type === 'answer') {
                         return (
                           <tr key="answer" className="text-green-500 font-bold border-t border-muted-foreground/20">
@@ -902,7 +927,7 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
                             <td className="py-1.5 px-2 text-right tabular-nums">
                               {formatValueWithUnit(trueAnswer!)}
                             </td>
-                            {shouldShowAnswer && sortMode !== 'magnitude' && (
+                            {shouldShowAnswer && (
                               <td className="py-1.5 px-2 text-right tabular-nums w-16"></td>
                             )}
                           </tr>
@@ -941,10 +966,10 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
                               <td className={`py-1.5 px-2 text-right tabular-nums ${textClass}`}>
                                 {isClosest && '*'}{formatValueWithUnit(guess.value)}
                               </td>
-                              {shouldShowAnswer && sortMode !== 'magnitude' && (
+                              {shouldShowAnswer && (
                                 <td className={`py-1.5 px-2 text-right tabular-nums text-xs w-16 ${textClass}`}>
-                                  {sortMode === 'distance'
-                                    ? `${guess.value >= trueAnswer ? '+' : '\u2212'}${formatWithCommas(Math.abs(guess.value - trueAnswer))}`
+                                  {diffMode === 'distance'
+                                    ? `${guess.value >= trueAnswer! ? '+' : '\u2212'}${formatWithCommas(Math.abs(guess.value - trueAnswer!))}`
                                     : `${getRatio(guess) === Infinity ? '\u221E' : getRatio(guess).toFixed(2)}x`
                                   }
                                 </td>
@@ -963,7 +988,8 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
                   </tbody>
                 </table>
               </div>
-            )}
+              )
+            })()}
           </div>
         )}
       </div>
