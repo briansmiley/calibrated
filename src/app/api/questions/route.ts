@@ -15,6 +15,8 @@ export async function POST(request: Request) {
       minValue: rawMin === undefined || rawMin === null ? null : Number(rawMin),
       maxValue: rawMax === undefined || rawMax === null ? null : Number(rawMax),
       trueAnswer: rawAnswer === undefined || rawAnswer === null ? null : Number(rawAnswer),
+      unit: body.unit ?? undefined,
+      isCurrency: typeof body.isCurrency === 'boolean' ? body.isCurrency : undefined,
       revealPin: body.revealPin ?? body.pin,
     }
 
