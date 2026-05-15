@@ -42,6 +42,12 @@ Two main tables for the simple question mode (see `supabase/migrations/` for ful
 - Branch naming: `feature/description` or `fix/description`
 - **Wait for explicit approval before pushing/merging** - After implementing a feature, let the user test it locally first. Don't push or create PRs until they explicitly say to (e.g., "push it", "looks good, merge it"). Questions like "make sense?" are confirming the plan, not approval to ship.
 
+## Feature Development Workflow
+- **Default to background subagents for feature work.** When the user asks for a new feature (anything non-trivial that involves multi-file changes, a new route, a new component, schema work, etc.), spawn an `Agent` with `subagent_type: "general-purpose"`, `run_in_background: true`, and `isolation: "worktree"`. This lets the user kick off multiple features in parallel without conflicting changes in the main checkout.
+- Brief the agent thoroughly in the prompt: the goal, the relevant files (with paths), this CLAUDE.md's conventions, and the expected branch name (`feature/<slug>`). Tell it to commit on a branch but **not push and not open a PR** — that stays with the user.
+- For small fixes, tweaks, questions, or UI adjustments where the user is iterating in real time, work in the foreground in the main checkout — don't delegate.
+- After a background agent reports back, summarize what it changed and surface the worktree path/branch so the user can review or merge.
+
 ## Routes
 - `/` - Home page with logo and "Create Question" button
 - `/create` - Create a new question (title, range, answer, optional PIN)
