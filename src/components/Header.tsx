@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { CalibratedLogo } from '@/components/CalibratedLogo'
+import { DiscordBotButton } from '@/components/DiscordBotButton'
 
 export function Header() {
   return (
@@ -10,12 +11,15 @@ export function Header() {
             <CalibratedLogo size="sm" />
           </Link>
 
-          <Link
-            href="/create"
-            className="text-sm text-muted-foreground hover:text-foreground"
-          >
-            New Question
-          </Link>
+          <div className="flex items-center gap-4">
+            <DiscordBotButton variant="compact" />
+            <Link
+              href="/create"
+              className="text-sm text-muted-foreground hover:text-foreground"
+            >
+              New Question
+            </Link>
+          </div>
         </div>
       </nav>
     </header>

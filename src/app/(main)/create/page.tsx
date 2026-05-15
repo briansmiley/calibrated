@@ -179,13 +179,13 @@ export default function CreateSimplePage() {
             className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
             <FaPlus className="h-3 w-3" />
-            <span>Details (optional)</span>
+            <span>Details</span>
           </button>
         ) : (
           <Input
             variant="underline"
             type="text"
-            placeholder="Details (optional)"
+            placeholder="Details"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             className="w-full"

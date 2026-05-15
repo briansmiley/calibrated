@@ -13,15 +13,25 @@ import {
   AlertDialogCancel,
 } from '@/components/ui/alert-dialog'
 
-export function DiscordBotButton() {
+type DiscordBotButtonProps = {
+  variant?: 'pill' | 'compact'
+}
+
+export function DiscordBotButton({ variant = 'pill' }: DiscordBotButtonProps = {}) {
+  const triggerClassName =
+    variant === 'pill'
+      ? 'mt-4 p-3 rounded-full border border-primary text-primary hover:bg-primary/10 transition-colors cursor-pointer'
+      : 'text-muted-foreground hover:text-foreground transition-colors cursor-pointer'
+  const iconClassName = variant === 'pill' ? 'h-6 w-6' : 'h-5 w-5'
+
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
         <button
-          className="mt-4 p-3 rounded-full border border-primary text-primary hover:bg-primary/10 transition-colors"
+          className={triggerClassName}
           aria-label="Add Discord Bot"
         >
-          <FaDiscord className="h-6 w-6" />
+          <FaDiscord className={iconClassName} />
         </button>
       </AlertDialogTrigger>
       <AlertDialogContent>
