@@ -506,12 +506,12 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
           <TooltipTrigger asChild>
             <button
               onClick={handleCopyLink}
-              className="mt-2 p-1.5 text-muted-foreground hover:text-foreground transition-colors"
+              className="mt-2 p-1.5 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
             >
               <IoIosLink className="h-5 w-5" />
             </button>
           </TooltipTrigger>
-          <TooltipContent>{linkCopied ? 'Copied!' : 'Copy link'}</TooltipContent>
+          <TooltipContent side="bottom">{linkCopied ? 'Copied!' : 'Copy link'}</TooltipContent>
         </Tooltip>
       </div>
 
