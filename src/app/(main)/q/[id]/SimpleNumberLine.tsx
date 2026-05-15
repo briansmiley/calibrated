@@ -6,7 +6,7 @@ import { SimpleQuestion, SimpleGuess } from '@/types/database'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
-import { FaLock, FaCheck, FaPlus, FaEye, FaSortUp, FaSortDown, FaDiscord } from 'react-icons/fa'
+import { FaLock, FaCheck, FaPlus, FaEye, FaSortAlphaDown, FaSortAlphaUp, FaSortNumericDown, FaSortNumericUp, FaDiscord } from 'react-icons/fa'
 import { IoIosLink } from 'react-icons/io'
 import { BsIncognito } from 'react-icons/bs'
 import { formatWithCommas } from '@/lib/format'
@@ -97,7 +97,7 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
   const [showRevealDialog, setShowRevealDialog] = useState(false)
   const [showSeeGuessesDialog, setShowSeeGuessesDialog] = useState(false)
   type SortMode = 'magnitude-asc' | 'magnitude-desc' | 'name-asc' | 'name-desc' | 'distance' | 'ratio'
-  const [sortMode, setSortMode] = useState<SortMode>('magnitude-asc')
+  const [sortMode, setSortMode] = useState<SortMode>('ratio')
   const [submitting, setSubmitting] = useState(false)
 
   const hasPin = question.reveal_pin !== null
@@ -422,6 +422,19 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
     if (trueAnswer === 0 && guess.value === 0) return 1
     if (trueAnswer === 0 || guess.value === 0) return Infinity
     return Math.max(guess.value / trueAnswer, trueAnswer / guess.value)
+  }
+
+  // Display ratio with a sign indicating direction: + when guess > answer, − when guess < answer
+  const formatRatio = (guess: SimpleGuess) => {
+    if (trueAnswer === null) return ''
+    if (trueAnswer === 0 && guess.value === 0) return '1x'
+    if (trueAnswer === 0 || guess.value === 0) return '∞'
+    if (guess.value === trueAnswer) return '1x'
+    const magnitude = guess.value > trueAnswer
+      ? guess.value / trueAnswer
+      : trueAnswer / guess.value
+    const sign = guess.value > trueAnswer ? '+' : '−'
+    return `${sign}${magnitude.toFixed(2)}x`
   }
 
   const guessesByRatio = trueAnswer === null
@@ -878,10 +891,10 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
 
             {/* Guesses table */}
             {guesses.length > 0 && (() => {
-              const diffMode: 'distance' | 'ratio' = sortMode === 'ratio' ? 'ratio' : 'distance'
-              const nameArrow = sortMode === 'name-asc' ? <FaSortUp className="inline h-3 w-3" /> : sortMode === 'name-desc' ? <FaSortDown className="inline h-3 w-3" /> : null
-              const magArrow = sortMode === 'magnitude-asc' ? <FaSortUp className="inline h-3 w-3" /> : sortMode === 'magnitude-desc' ? <FaSortDown className="inline h-3 w-3" /> : null
-              const diffArrow = (sortMode === 'distance' || sortMode === 'ratio') ? <FaSortUp className="inline h-3 w-3" /> : null
+              const diffMode: 'distance' | 'ratio' = sortMode === 'distance' ? 'distance' : 'ratio'
+              const sortIcon = 'inline h-3 w-3'
+              const nameArrow = sortMode === 'name-asc' ? <FaSortAlphaDown className={sortIcon} /> : sortMode === 'name-desc' ? <FaSortAlphaUp className={sortIcon} /> : null
+              const magArrow = sortMode === 'magnitude-asc' ? <FaSortNumericDown className={sortIcon} /> : sortMode === 'magnitude-desc' ? <FaSortNumericUp className={sortIcon} /> : null
 
               const headerBtn = 'inline-flex items-center gap-1 hover:text-foreground transition-colors'
 
@@ -912,7 +925,7 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
                             onClick={() => setSortMode(sortMode === 'distance' ? 'ratio' : 'distance')}
                             className={headerBtn}
                           >
-                            {diffMode === 'ratio' ? 'Ratio' : '\u0394'} {diffArrow}
+                            {diffMode === 'ratio' ? 'Ratio' : 'Diff'}
                           </button>
                         </th>
                       )}
@@ -970,7 +983,7 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
                                 <td className={`py-1.5 px-2 text-right tabular-nums text-xs w-16 ${textClass}`}>
                                   {diffMode === 'distance'
                                     ? `${guess.value >= trueAnswer! ? '+' : '\u2212'}${formatWithCommas(Math.abs(guess.value - trueAnswer!))}`
-                                    : `${getRatio(guess) === Infinity ? '\u221E' : getRatio(guess).toFixed(2)}x`
+                                    : formatRatio(guess)
                                   }
                                 </td>
                               )}
