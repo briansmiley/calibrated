@@ -559,50 +559,62 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
             )}
 
             {/* Submitted guesses - visible when showResults */}
-            {showResults && guesses.map((guess) => {
-              const isMyGuess = guess.id === myGuessId
-              const isHovered = hoveredGuessId === guess.id
-              const isClosest = guess.id === closestGuessId
-              const showDetails = isMyGuess || isHovered
+            {(() => {
+              if (!showResults) return null
+              const guessValues = guesses.map(g => g.value)
+              const rangeMin = !hasExplicitBounds && guessValues.length > 0 ? Math.min(...guessValues) : null
+              const rangeMax = !hasExplicitBounds && guessValues.length > 0 ? Math.max(...guessValues) : null
+              return guesses.map((guess) => {
+                const isMyGuess = guess.id === myGuessId
+                const isHovered = hoveredGuessId === guess.id
+                const isClosest = guess.id === closestGuessId
+                const showDetails = isMyGuess || isHovered
+                const showRangeLabel = !showDetails && !hasExplicitBounds && (guess.value === rangeMin || guess.value === rangeMax)
 
-              return (
-                <div
-                  key={guess.id}
-                  className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 cursor-pointer ${isHovered ? 'z-20' : ''}`}
-                  style={{ left: `${getPositionFromValue(guess.value)}%` }}
-                  onMouseEnter={() => setHoveredGuessId(guess.id)}
-                  onMouseLeave={() => setHoveredGuessId(null)}
-                >
-                  {/* Name label above */}
-                  {showDetails && (
-                    <div className="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 flex flex-col items-center">
-                      <span className={`text-lg whitespace-nowrap ${isClosest ? 'text-white font-medium' : 'text-muted-foreground'} ${isHovered ? 'bg-zinc-900 px-2 rounded' : ''}`}>
-                        {guess.name || <BsIncognito className="h-5 w-5" />}
-                      </span>
-                      {isMyGuess && (
-                        <div className="w-0 h-0 border-l-[8px] border-r-[8px] border-t-[8px] border-l-transparent border-r-transparent border-t-muted-foreground" />
-                      )}
-                    </div>
-                  )}
-                  {isClosest ? (
-                    <div className="w-5 h-5 rounded-full bg-white" />
-                  ) : (
-                    <div
-                      className={`rounded-full transition-all ${
-                        isMyGuess ? 'w-5 h-5' : 'w-4 h-4'
-                      } ${
-                        revealed ? 'bg-zinc-400' : 'bg-zinc-600'
-                      }`}
-                    />
-                  )}
-                  {showDetails && (
-                    <div className={`absolute top-full mt-1 left-1/2 -translate-x-1/2 text-lg whitespace-nowrap ${isClosest ? 'text-white font-medium' : 'text-muted-foreground'} ${isHovered ? 'bg-zinc-900 px-2 rounded' : ''}`}>
-                      {formatValue(guess.value)}
-                    </div>
-                  )}
-                </div>
-              )
-            })}
+                return (
+                  <div
+                    key={guess.id}
+                    className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 cursor-pointer ${isHovered ? 'z-20' : ''}`}
+                    style={{ left: `${getPositionFromValue(guess.value)}%` }}
+                    onMouseEnter={() => setHoveredGuessId(guess.id)}
+                    onMouseLeave={() => setHoveredGuessId(null)}
+                  >
+                    {/* Name label above */}
+                    {showDetails && (
+                      <div className="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 flex flex-col items-center">
+                        <span className={`text-lg whitespace-nowrap ${isClosest ? 'text-white font-medium' : 'text-muted-foreground'} ${isHovered ? 'bg-zinc-900 px-2 rounded' : ''}`}>
+                          {guess.name || <BsIncognito className="h-5 w-5" />}
+                        </span>
+                        {isMyGuess && (
+                          <div className="w-0 h-0 border-l-[8px] border-r-[8px] border-t-[8px] border-l-transparent border-r-transparent border-t-muted-foreground" />
+                        )}
+                      </div>
+                    )}
+                    {isClosest ? (
+                      <div className="w-5 h-5 rounded-full bg-white" />
+                    ) : (
+                      <div
+                        className={`rounded-full transition-all ${
+                          isMyGuess ? 'w-5 h-5' : 'w-4 h-4'
+                        } ${
+                          revealed ? 'bg-zinc-400' : 'bg-zinc-600'
+                        }`}
+                      />
+                    )}
+                    {showDetails && (
+                      <div className={`absolute top-full mt-1 left-1/2 -translate-x-1/2 text-lg whitespace-nowrap ${isClosest ? 'text-white font-medium' : 'text-muted-foreground'} ${isHovered ? 'bg-zinc-900 px-2 rounded' : ''}`}>
+                        {formatValue(guess.value)}
+                      </div>
+                    )}
+                    {showRangeLabel && (
+                      <div className="absolute top-full mt-1 left-1/2 -translate-x-1/2 text-lg whitespace-nowrap text-muted-foreground/60">
+                        {formatValue(guess.value)}
+                      </div>
+                    )}
+                  </div>
+                )
+              })
+            })()}
 
             {/* True answer - only when showResults AND revealed AND showAnswer AND answer is set */}
             {showResults && shouldShowAnswer && (
