@@ -380,12 +380,37 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
   }
 
   const formatValue = (value: number): string => {
+    if (value === 0) return '0'
+    const abs = Math.abs(value)
     const range = rightBound - leftBound
+
+    // Pick a unit by the value's own magnitude (not the range), so 100,000
+    // in a 0-1M range shows as "100k", not "0.1M".
+    if (abs >= 1000) {
+      const units: Array<[number, string]> = [
+        [1e12, 'T'],
+        [1e9, 'B'],
+        [1e6, 'M'],
+        [1e3, 'k'],
+      ]
+      for (const [threshold, suffix] of units) {
+        if (abs >= threshold) {
+          const scaled = value / threshold
+          const absScaled = Math.abs(scaled)
+          // ~4 sig figs: e.g. 220.5k, 22.55k, 2.255k
+          const decimals = absScaled >= 100 ? 1 : absScaled >= 10 ? 2 : 3
+          const fixed = scaled.toFixed(decimals)
+          const trimmed = fixed.includes('.')
+            ? fixed.replace(/0+$/, '').replace(/\.$/, '')
+            : fixed
+          return trimmed + suffix
+        }
+      }
+    }
+
     if (range <= 1) return value.toFixed(2)
     if (range <= 10) return value.toFixed(1)
-    if (range >= 1000000) return (value / 1000000).toFixed(1) + 'M'
-    if (range >= 1000) return (value / 1000).toFixed(1) + 'K'
-    return value.toLocaleString()
+    return formatWithCommas(Math.round(value * 100) / 100)
   }
 
   const formatValueWithUnit = (value: number): string => {
@@ -947,15 +972,22 @@ export function SimpleNumberLine({ question, initialGuesses }: Props) {
                     {tableRows.map((row) => {
                       if (row.type === 'answer') {
                         return (
-                          <tr key="answer" className="text-green-500 font-bold border-t border-muted-foreground/20">
-                            <td className="py-1.5 px-2 text-left">Answer</td>
-                            <td className="py-1.5 px-2 text-right tabular-nums">
-                              {formatValueWithUnit(trueAnswer!)}
-                            </td>
-                            {shouldShowAnswer && (
-                              <td className="py-1.5 px-2 text-right tabular-nums w-16"></td>
-                            )}
-                          </tr>
+                          <Tooltip key="answer">
+                            <TooltipTrigger asChild>
+                              <tr className="text-green-500 font-bold border-t border-muted-foreground/20 cursor-default">
+                                <td className="py-1.5 px-2 text-left">Answer</td>
+                                <td className="py-1.5 px-2 text-right tabular-nums">
+                                  {formatValueWithUnit(trueAnswer!)}
+                                </td>
+                                {shouldShowAnswer && (
+                                  <td className="py-1.5 px-2 text-right tabular-nums w-16"></td>
+                                )}
+                              </tr>
+                            </TooltipTrigger>
+                            <TooltipContent className="text-center">
+                              Answer: {formatWithCommas(trueAnswer!)}
+                            </TooltipContent>
+                          </Tooltip>
                         )
                       }
 
